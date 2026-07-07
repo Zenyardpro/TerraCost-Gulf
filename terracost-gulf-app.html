@@ -1,0 +1,4031 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>TerraCost Gulf — Landscaping BOQ & Cost Estimator (AED / SAR / QAR)</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
+
+    /* ── Tokens ─────────────────────────────────────── */
+    :root {
+      --forest:       #1A3829;
+      --forest-mid:   #265C3C;
+      --sage:         #4A8060;
+      --sage-light:   #79AE90;
+      --brass:        #A8711E;
+      --brass-hover:  #C08828;
+      --sand:         #EAE6DF;
+      --cream:        #F4F1EB;
+      --white:        #FEFDFB;
+      --stone-dk:     #1C1916;
+      --stone:        #4C4640;
+      --stone-lt:     #7E786F;
+      --border:       #D4CEC5;
+      --border-lt:    #E6E2DA;
+      --green-pale:   #EDF5F0;
+      --red:          #B03A3A;
+      --red-lt:       #CC5050;
+      --shadow-xs:    0 1px 3px rgba(15,10,5,.07);
+      --shadow-sm:    0 2px 8px rgba(15,10,5,.09);
+      --shadow-md:    0 6px 20px rgba(15,10,5,.12);
+      --shadow-lg:    0 16px 48px rgba(10,20,14,.18);
+      --radius:       8px;
+    }
+
+    /* ── Reset ───────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: var(--sand);
+      margin: 0;
+      color: var(--stone-dk);
+      font-size: 14px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── App shell ───────────────────────────────────── */
+    .container {
+      max-width: 1060px;
+      margin: 0 auto 48px;
+      background: transparent;
+      border-radius: 0;
+      padding: 0;
+      box-shadow: none;
+      border: none;
+    }
+
+    /* ── h1 no longer used for header (see .app-header) ─ */
+    h1 { margin: 0; }
+
+    h3 {
+      margin: 0 0 14px;
+      color: var(--forest);
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-lt);
+    }
+
+    label {
+      font-weight: 500;
+      color: var(--stone);
+      font-size: 11.5px;
+      display: block;
+      margin-top: 6px;
+      margin-bottom: 3px;
+      letter-spacing: 0.15px;
+    }
+
+    /* ── Inputs ──────────────────────────────────────── */
+    select,
+    input[type="text"],
+    input[type="number"],
+    input[type="date"] {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      margin: 0 0 10px;
+      background: var(--white);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      color: var(--stone-dk);
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+
+    select:focus, input:focus {
+      border-color: var(--sage);
+      box-shadow: 0 0 0 3px rgba(74,128,96,.10);
+    }
+
+    .unit-inline      { width: 68px !important; margin: 0 0 0 3px !important; display: inline-block !important; }
+    .unit-custom-inp  { width: 66px !important; margin-left: 4px !important; display: inline-block !important; }
+
+    /* ── Grids ───────────────────────────────────────── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 20px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 16px; }
+
+    /* ── Top bar ─────────────────────────────────────── */
+    #topBar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: var(--white);
+      border-bottom: 1px solid var(--border-lt);
+      padding: 10px 32px;
+      flex-wrap: wrap;
+      box-shadow: var(--shadow-xs);
+      margin-bottom: 24px;
+    }
+
+    #currencyBar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    #currencyBar label { margin: 0; font-size: 11.5px; display: inline; color: var(--stone-lt); font-weight: 500; }
+    #currencyBar select { width: auto; margin: 0; padding: 5px 8px; font-size: 12px; }
+    #currencyBar > span { font-size: 10px; color: var(--stone-lt); }
+    #docActions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    #saveStatus { font-size: 10.5px; color: var(--sage); font-style: italic; }
+
+    /* ── Content padding — handled by .acc-section ────── */
+    #topBar { margin-bottom: 16px; }
+
+    /* ── Info blocks ─────────────────────────────────── */
+    .info-block {
+      background: var(--white);
+      border: 1px solid var(--border-lt);
+      border-left: 3px solid var(--sage);
+      border-radius: var(--radius);
+      padding: 18px 20px 12px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-xs);
+    }
+
+    /* ── Zone blocks ─────────────────────────────────── */
+    .zone-block {
+      margin-bottom: 20px;
+      background: var(--white);
+      border-radius: var(--radius);
+      border: 1px solid var(--border-lt);
+      border-left: 3px solid var(--forest-mid);
+      padding: 18px 18px 14px;
+      box-shadow: var(--shadow-xs);
+      transition: box-shadow .2s, border-left-color .2s;
+    }
+
+    .zone-block:hover {
+      box-shadow: var(--shadow-sm);
+      border-left-color: var(--forest);
+    }
+
+    .zone-block input[type="text"] { border-color: var(--border); background: var(--cream); }
+    /* ── Project-wide zone ───────────────────────────── */
+    .zone-pw {
+      border-left-color: var(--brass);
+      background: #FEFCF7;
+    }
+    .zone-pw:hover { border-left-color: var(--brass-hover); }
+    .zone-pw-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--brass);
+      background: rgba(168,113,30,.08);
+      padding: 3px 10px;
+      border-radius: 4px;
+      border: 1px solid rgba(168,113,30,.2);
+      white-space: nowrap;
+    }
+
+
+
+    .actions { display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+
+    /* ── Tables ──────────────────────────────────────── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 12px;
+      background: var(--white);
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid var(--border-lt);
+      box-shadow: var(--shadow-xs);
+    }
+
+    th, td { padding: 7px 9px; border: 1px solid var(--border-lt); font-size: 12.5px; }
+
+    th {
+      background: var(--forest);
+      color: rgba(255,255,255,.88);
+      font-weight: 600;
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-color: rgba(255,255,255,.06);
+    }
+
+    tr:nth-child(even) td { background: var(--green-pale); }
+    tr:hover td { background: rgba(74,128,96,.06); }
+
+    .subtablehead th {
+      background: var(--cream);
+      color: var(--stone);
+      font-size: 10px;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    td.serial {
+      text-align: center;
+      color: var(--stone-lt);
+      font-size: 10.5px;
+      font-weight: 600;
+      white-space: nowrap;
+      width: 36px;
+    }
+
+    .notes-inp {
+      width: 100% !important;
+      margin-top: 3px !important;
+      font-size: 11px !important;
+      color: var(--stone-lt) !important;
+      border: 1px dashed var(--border) !important;
+      background: var(--cream) !important;
+      padding: 3px 7px !important;
+      font-style: italic;
+      border-radius: 4px;
+    }
+
+    /* Prevent table inputs from overflowing cells */
+    table input[type="text"] {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ── Totals ──────────────────────────────────────── */
+    .totals-block {
+      text-align: right;
+      margin-top: 20px;
+      font-size: 13.5px;
+      background: var(--forest);
+      border-radius: var(--radius);
+      padding: 18px 22px 16px;
+      color: rgba(255,255,255,.65);
+      box-shadow: var(--shadow-md);
+    }
+
+    .totals-block .trow { display: flex; justify-content: flex-end; gap: 16px; padding: 3px 0; }
+    .totals-block .tlabel { color: rgba(255,255,255,.6); min-width: 250px; text-align: right; font-size: 12.5px; }
+    .totals-block .tval   { min-width: 128px; text-align: right; color: rgba(255,255,255,.85); font-weight: 500; }
+
+    .totals-block .grandrow {
+      font-size: 21px;
+      font-weight: 700;
+      color: #fff;
+      border-top: 1px solid rgba(255,255,255,.18);
+      margin-top: 10px;
+      padding-top: 10px;
+    }
+
+    .totals-block .grandrow .tlabel { color: rgba(255,255,255,.8); font-weight: 600; }
+    .totals-block .discrow .tval    { color: #F4A07A; }
+    .totals-block .provrow .tval    { color: #A0D4B4; }
+
+    /* ── Textarea ────────────────────────────────────── */
+    textarea {
+      width: 100%;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      margin-top: 4px;
+      margin-bottom: 8px;
+      padding: 10px 12px;
+      font-size: 12.5px;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--white);
+      color: var(--stone-dk);
+      line-height: 1.6;
+      resize: vertical;
+    }
+
+    textarea:focus { outline: none; border-color: var(--sage); box-shadow: 0 0 0 3px rgba(74,128,96,.10); }
+
+    .details-box { width: 100%; border-radius: 5px; border: 1px solid var(--border-lt); padding: 10px; font-size: 12.5px; background: var(--cream); color: var(--stone-dk); }
+    .details-hidden { display: none; }
+    .details-visible { display: block; margin: 8px 0 2px; }
+
+    /* ── Buttons ─────────────────────────────────────── */
+    button {
+      background: var(--forest);
+      color: #fff;
+      border: none;
+      padding: 9px 18px;
+      font-size: 13px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background .15s, transform .08s;
+      letter-spacing: 0.1px;
+    }
+
+    button:hover  { background: var(--forest-mid); }
+    button:active { transform: scale(.98); }
+
+    button.secondary       { background: var(--sage); }
+    button.secondary:hover { background: var(--forest-mid); }
+
+    button.delete       { background: var(--red); }
+    button.delete:hover { background: var(--red-lt); }
+
+    button.rowbtn {
+      font-size: 11px;
+      padding: 3px 9px;
+      background: var(--white);
+      color: var(--stone);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-weight: 500;
+    }
+    button.rowbtn:hover { background: var(--cream); color: var(--stone-dk); }
+
+    button.smallbtn { font-size: 12px; padding: 5px 12px; }
+    .row-actions { display: flex; gap: 5px; }
+
+    hr { margin: 24px 0; border: none; border-top: 1px solid var(--border-lt); }
+
+    input[readonly], input[tabindex="-1"] {
+      background: var(--cream) !important;
+      color: var(--stone-lt) !important;
+      border: 1px dashed var(--border) !important;
+    }
+
+    #maintBlock input[type="number"] { width: 120px !important; display: inline-block !important; }
+
+    /* ── Project-wide zone ──────────────────────────── */
+    .zone-block.zone-pw { border-left-color: var(--forest); background: #FAFDF8; }
+    .zone-pw-label {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.9px; color: var(--white);
+      background: var(--forest); padding: 2px 9px;
+      border-radius: 3px; margin-right: 6px; vertical-align: middle;
+    }
+
+    /* ── Responsive ──────────────────────────────────── */
+    @media (max-width: 700px) {
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      h1 { padding: 18px 16px; font-size: 17px; }
+      #topBar { padding: 10px 16px; flex-direction: column; align-items: flex-start; }
+      th, td { font-size: 11px; padding: 5px 5px; }
+      td.serial { display: none; }
+      .info-block, #zonesContainer, .actions, hr,
+      .container > label, .container > textarea,
+      .container > br, .container > button {
+        margin-left: 12px; margin-right: 12px;
+      }
+    }
+
+    /* ── App header ──────────────────────────────────── */
+    .app-header {
+      background: var(--forest);
+      padding: 26px 32px 22px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      margin-bottom: 0;
+    }
+    .app-header-brand {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .app-header-brand::before {
+      content: '';
+      display: inline-block;
+      width: 8px; height: 8px;
+      background: var(--sage-light);
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .app-header-sub {
+      font-size: 12.5px;
+      color: rgba(255,255,255,.52);
+      margin-top: 5px;
+      letter-spacing: 0.1px;
+      padding-left: 18px;
+    }
+
+    /* ── Accordion ───────────────────────────────────── */
+    .acc-section {
+      margin: 0 24px 6px;
+    }
+
+    .acc-hdr {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      background: var(--white);
+      border: 1px solid var(--border-lt);
+      border-radius: 8px;
+      cursor: pointer;
+      user-select: none;
+      transition: background .15s, border-color .15s;
+    }
+    .acc-section.open .acc-hdr {
+      border-radius: 8px 8px 0 0;
+      border-bottom-color: transparent;
+      background: var(--forest);
+    }
+    .acc-hdr:hover { background: var(--green-pale); border-color: var(--border); }
+    .acc-section.open .acc-hdr:hover { background: var(--forest-mid); }
+
+    .acc-num {
+      width: 22px; height: 22px;
+      background: var(--green-pale);
+      color: var(--forest);
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: background .15s, color .15s;
+    }
+    .acc-section.open .acc-num {
+      background: rgba(255,255,255,.15);
+      color: #fff;
+    }
+
+    .acc-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--stone-dk);
+      letter-spacing: 0.1px;
+      flex-shrink: 0;
+    }
+    .acc-section.open .acc-title { color: #fff; }
+
+    .acc-hint {
+      font-size: 11.5px;
+      color: var(--stone-lt);
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      padding-left: 8px;
+    }
+    .acc-section.open .acc-hint { color: rgba(255,255,255,.5); }
+
+    .acc-chevron {
+      font-size: 20px;
+      color: var(--stone-lt);
+      line-height: 1;
+      transition: transform .2s, color .15s;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+    .acc-section.open .acc-chevron {
+      transform: rotate(90deg);
+      color: rgba(255,255,255,.7);
+    }
+
+    .acc-body {
+      display: none;
+      background: var(--white);
+      border: 1px solid var(--border-lt);
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      padding: 18px 20px 14px;
+      animation: accOpen .18s ease-out;
+    }
+    .acc-section.open .acc-body { display: block; }
+
+    @keyframes accOpen {
+      from { opacity: 0; transform: translateY(-4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* strip inner info-block border inside acc-body */
+    .acc-body > .info-block, .acc-body .info-block {
+      border: none; border-radius: 0; box-shadow: none;
+      margin-bottom: 0; padding: 0; background: transparent;
+    }
+
+    /* ── Totals wrap (always visible) ────────────────── */
+    .totals-wrap {
+      margin: 8px 24px 0;
+    }
+
+    /* ── Export row ──────────────────────────────────── */
+    .export-row {
+      display: flex;
+      gap: 10px;
+      margin: 16px 24px 32px;
+      flex-wrap: wrap;
+    }
+
+    /* ── Paywall overlay ─────────────────────────────── */
+    #paywallOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(8,18,12,.82);
+      backdrop-filter: blur(6px);
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    #paywallBox {
+      background: var(--white);
+      border-radius: 12px;
+      max-width: 456px;
+      width: 100%;
+      padding: 40px 36px 32px;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border-lt);
+      text-align: center;
+    }
+
+    #paywallBox .pw-icon { font-size: 34px; margin-bottom: 8px; }
+
+    #paywallBox h2 {
+      color: var(--forest);
+      margin: 0 0 8px;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+    }
+
+    #paywallBox .pw-sub {
+      color: var(--stone);
+      font-size: 13.5px;
+      margin-bottom: 20px;
+      line-height: 1.65;
+    }
+
+    #paywallBox .pw-price {
+      font-size: 38px;
+      font-weight: 700;
+      color: var(--forest);
+      margin-bottom: 2px;
+      letter-spacing: -1.5px;
+    }
+
+    #paywallBox .pw-price-note {
+      font-size: 11px;
+      color: var(--stone-lt);
+      margin-bottom: 20px;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+
+    #paywallBox .pw-features {
+      text-align: left;
+      background: var(--green-pale);
+      border-radius: 8px;
+      padding: 13px 16px;
+      margin-bottom: 22px;
+      font-size: 13px;
+      color: var(--stone-dk);
+      border: 1px solid rgba(74,128,96,.15);
+    }
+    #paywallBox .pw-features li { margin-bottom: 6px; list-style: none; padding-left: 2px; }
+    #paywallBox .pw-features li::before { content: '✓  '; color: var(--sage); font-weight: 700; }
+
+    #paywallBox .pw-pay-btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      background: var(--brass);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 20px;
+      text-decoration: none;
+      letter-spacing: 0.1px;
+      transition: background .15s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    #paywallBox .pw-pay-btn:hover { background: var(--brass-hover); }
+
+    #paywallBox .pw-divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--stone-lt);
+      font-size: 11px;
+      margin-bottom: 14px;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+    #paywallBox .pw-divider::before,
+    #paywallBox .pw-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    #paywallBox .pw-code-row { display: flex; gap: 8px; margin-bottom: 8px; }
+
+    #paywallBox #unlockCodeInput {
+      flex: 1;
+      padding: 10px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      font-size: 14px;
+      background: var(--white);
+      color: var(--forest);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      outline: none;
+      font-weight: 700;
+      font-family: 'DM Sans', monospace;
+    }
+    #paywallBox #unlockCodeInput:focus { border-color: var(--sage); box-shadow: 0 0 0 3px rgba(74,128,96,.10); }
+
+    #paywallBox .pw-unlock-btn {
+      padding: 10px 20px;
+      background: var(--forest);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      font-family: 'DM Sans', sans-serif;
+    }
+    #paywallBox .pw-unlock-btn:hover { background: var(--forest-mid); }
+
+    #paywallBox #unlockError { color: var(--red); font-size: 12px; min-height: 18px; margin-bottom: 6px; }
+
+    #paywallBox .pw-close {
+      background: none;
+      border: none;
+      color: var(--stone-lt);
+      font-size: 11.5px;
+      cursor: pointer;
+      margin-top: 8px;
+      text-decoration: underline;
+      font-family: 'DM Sans', sans-serif;
+    }
+    #paywallBox .pw-close:hover { color: var(--stone); }
+
+    /* ── Splash screen ───────────────────────────────────── */
+    #splashOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: #0D2B1E;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px;
+      text-align: center;
+      transition: opacity 0.4s ease;
+    }
+    #splashOverlay.hiding {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .splash-dot {
+      width: 10px; height: 10px;
+      background: #79AE90;
+      border-radius: 50%;
+      margin: 0 auto 28px;
+    }
+    .splash-brand {
+      font-size: 32px;
+      font-weight: 700;
+      color: #FFFFFF;
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+
+
+    /* ── Sticky bottom bar ───────────────────────────────── */
+    .totals-wrap { display: none; }
+    .export-row  { display: none; }
+
+    #stickyBar {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 900;
+      background: var(--forest);
+      box-shadow: 0 -3px 16px rgba(10,20,14,.22);
+      padding: 10px 16px 12px;
+    }
+    #stickyBar .sticky-totals {
+      display: flex; justify-content: flex-end; align-items: center;
+      flex-wrap: wrap; gap: 6px 20px; margin-bottom: 8px;
+    }
+    #stickyBar .sticky-totals .s-item { display: flex; flex-direction: column; align-items: flex-end; }
+    #stickyBar .sticky-totals .s-label { font-size: 10px; opacity: .6; text-transform: uppercase; letter-spacing: .4px; color: rgba(255,255,255,.65); }
+    #stickyBar .sticky-totals .s-val   { font-size: 14px; font-weight: 600; color: rgba(255,255,255,.85); }
+    #stickyBar .sticky-totals .s-grand .s-val { font-size: 18px; font-weight: 700; color: #fff; }
+    #stickyBar .sticky-exports { display: flex; gap: 8px; }
+    #stickyBar .sticky-exports button {
+      flex: 1; padding: 9px 10px; font-size: 13px; font-weight: 600;
+      border: none; border-radius: 7px; cursor: pointer; font-family: 'DM Sans', sans-serif;
+    }
+    #stickyBar .btn-pdf { background: #fff; color: var(--forest); }
+    #stickyBar .btn-xl  { background: rgba(255,255,255,.15); color: #fff; }
+    .container { padding-bottom: 140px; }
+
+    /* ── Excel dropdown ───────────────────────────────────── */
+    .xl-dropdown-wrap { flex: 1; position: relative; }
+    .xl-dropdown-wrap .btn-xl { width: 100%; }
+    .xl-dropdown-menu {
+      display: none; position: absolute; bottom: calc(100% + 6px);
+      left: 0; right: 0; background: #1A3829; border-radius: 8px;
+      overflow: hidden; box-shadow: 0 -4px 20px rgba(10,20,14,.3); z-index: 910;
+    }
+    .xl-dropdown-menu.open { display: block; }
+    .xl-dropdown-menu button {
+      width: 100%; padding: 12px 14px; background: none; border: none; color: #fff;
+      font-size: 13px; font-family: 'DM Sans', sans-serif; text-align: left; cursor: pointer;
+      border-bottom: 1px solid rgba(255,255,255,.08); display: flex; flex-direction: column; gap: 2px;
+    }
+    .xl-dropdown-menu button:last-child { border-bottom: none; }
+    .xl-dropdown-menu button:hover { background: rgba(255,255,255,.08); }
+    .xl-dropdown-menu button .xl-opt-label { font-weight: 600; font-size: 13px; }
+    .xl-dropdown-menu button .xl-opt-sub   { font-size: 11px; opacity: .55; }
+
+    /* ── Multi-select scope picker ────────────────────────── */
+    .scope-picker-overlay {
+      display: none; position: fixed; inset: 0; z-index: 8000;
+      background: rgba(10,20,14,.75); backdrop-filter: blur(4px);
+      align-items: flex-end; justify-content: center;
+    }
+    .scope-picker-overlay.open { display: flex; }
+    .scope-picker-sheet {
+      background: #FEFDFB; border-radius: 16px 16px 0 0; width: 100%;
+      max-width: 680px; max-height: 80vh; display: flex; flex-direction: column;
+      box-shadow: 0 -8px 32px rgba(10,20,14,.18);
+    }
+    .scope-picker-header {
+      padding: 16px 18px 12px; border-bottom: 1px solid #EDE8E0;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .scope-picker-header h3 { margin: 0; font-size: 15px; font-weight: 700; color: #1A3829; }
+    .scope-picker-header span { font-size: 12px; color: #7E786F; }
+    .scope-picker-list { overflow-y: auto; flex: 1; padding: 10px 12px; }
+    .scope-picker-item {
+      display: flex; align-items: center; gap: 12px; padding: 10px 8px;
+      border-radius: 8px; cursor: pointer; transition: background .1s;
+      border-bottom: 1px solid #F0EDE8;
+    }
+    .scope-picker-item:last-child { border-bottom: none; }
+    .scope-picker-item:hover { background: #F5F2EC; }
+    .scope-picker-item.already-added { opacity: .45; cursor: not-allowed; pointer-events: none; }
+    .scope-picker-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: #265C3C; cursor: pointer; flex-shrink: 0; }
+    .scope-picker-item label { font-size: 13.5px; color: #2A2420; cursor: pointer; flex: 1; }
+    .scope-picker-item .already-tag { font-size: 10px; color: #7E786F; background: #EDE8E0; padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
+    .scope-picker-footer { padding: 12px 16px 20px; border-top: 1px solid #EDE8E0; display: flex; gap: 10px; }
+    .scope-picker-footer .btn-add { flex: 1; background: #265C3C; color: #fff; border: none; padding: 13px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+    .scope-picker-footer .btn-cancel { background: #F0EDE8; color: #4A3010; border: none; padding: 13px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+
+  </style>
+</head>
+<body>
+
+<div id="splashOverlay">
+  <div class="splash-dot"></div>
+  <div class="splash-brand">TerraCost</div>
+</div>
+
+
+<!-- LEAD CAPTURE MODAL -->
+<div id="leadOverlay" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(10,20,14,.82);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#FEFDFB;border-radius:12px;max-width:440px;width:100%;padding:36px 32px 28px;box-shadow:0 16px 48px rgba(10,20,14,.20);text-align:center;">
+    <div style="font-size:30px;margin-bottom:10px;">📄</div>
+    <h2 style="color:#1A3829;margin:0 0 8px;font-size:20px;font-weight:700;letter-spacing:-0.2px;">Almost there</h2>
+    <p style="color:#4C4640;font-size:13.5px;margin-bottom:22px;line-height:1.65;">Enter your details to download. We'll send you support and updates directly.</p>
+    <input type="text"  id="leadName"     placeholder="Your Name *"                  style="width:100%;padding:10px 12px;border:1px solid #D4CEC5;border-radius:6px;font-size:13.5px;margin-bottom:10px;box-sizing:border-box;font-family:inherit;">
+    <input type="email" id="leadEmail"    placeholder="Email Address *"              style="width:100%;padding:10px 12px;border:1px solid #D4CEC5;border-radius:6px;font-size:13.5px;margin-bottom:10px;box-sizing:border-box;font-family:inherit;">
+    <input type="tel"   id="leadWhatsapp" placeholder="WhatsApp Number (optional)"   style="width:100%;padding:10px 12px;border:1px solid #D4CEC5;border-radius:6px;font-size:13.5px;margin-bottom:10px;box-sizing:border-box;font-family:inherit;">
+    <input type="text"  id="leadCompany"  placeholder="Company Name (optional)"      style="width:100%;padding:10px 12px;border:1px solid #D4CEC5;border-radius:6px;font-size:13.5px;margin-bottom:18px;box-sizing:border-box;font-family:inherit;">
+    <button onclick="submitLead()" style="width:100%;padding:14px;background:#A8711E;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:0.1px;">Download Your BOQ →</button>
+    <div id="leadError" style="color:#B03A3A;font-size:12px;min-height:16px;margin-top:8px;"></div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="app-header">
+    <div class="app-header-brand">TerraCost <span style="font-size:12px;font-weight:400;opacity:0.55;letter-spacing:0.5px;margin-left:4px;">Gulf</span></div>
+    <span id="trialBadge" style="background:rgba(168,113,30,.2);border:1px solid rgba(168,113,30,.4);color:#C08828;border-radius:20px;padding:3px 12px;font-size:11px;font-weight:600;margin-left:10px;"></span>
+    <div class="app-header-sub">Prepare accurate landscape BOQs and tender documents — AED · SAR · QAR · KWD · OMR</div>
+  </div>
+
+  <!-- TOP BAR -->
+  <div id="topBar">
+    <div id="currencyBar">
+      <label for="currencySelect">Currency:</label>
+      <select id="currencySelect" onchange="setCurrency()"></select>
+      <span style="font-size:10px;color:#7E786F;">GCC currencies · VAT 5%</span>
+    </div>
+    <div id="docActions">
+      <button class="smallbtn" onclick="saveNow()">&#128190; Save</button>
+      <button class="smallbtn secondary" onclick="downloadExcel()">&#128202; Excel</button>
+      <button class="smallbtn secondary" onclick="exportJSON()" title="Backup as JSON">&#8595; Backup</button>
+      <button class="smallbtn secondary" onclick="triggerImport()">&#8593; Load</button>
+      <input type="file" id="importFile" style="display:none" accept=".json" onchange="readImport(this)">
+      <button class="smallbtn delete" onclick="newBOQ()">+ New BOQ</button>
+      <span id="saveStatus"></span>
+    </div>
+  </div>
+
+  <!-- SITE SURVEY LOOKUP (from TerraScope) -->
+  <div id="surveyBar" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px;background:#F8FDF8;border:1px solid #C6DDC9;border-radius:6px;margin:0 0 14px;">
+    <span style="font-size:11px;font-weight:700;color:#4E6B52;text-transform:uppercase;letter-spacing:.6px;white-space:nowrap;">Site Survey ID</span>
+    <input type="text" id="surveyIdInput" placeholder="e.g. proj_a8f3k9c2d1e0" style="flex:1;min-width:160px;border:1px solid #D4DBD5;border-radius:4px;padding:6px 9px;font-size:13px;">
+    <button class="smallbtn secondary" onclick="loadSurveyById()" id="surveyLoadBtn">Load Survey</button>
+    <span id="surveyStatus" style="font-size:12px;color:#7E786F;"></span>
+  </div>
+  <div id="surveyPanel" style="display:none;background:#fff;border:1px solid #D4DBD5;border-radius:6px;padding:14px 16px;margin:0 0 18px;font-size:12.5px;line-height:1.6;"></div>
+
+  <!-- Rate warning banner (shown when switching from AED) -->
+  <div id="rateBanner" style="display:none;align-items:center;gap:12px;background:#FFF8E6;border:1px solid #F0D080;border-radius:var(--radius);padding:10px 16px;margin-bottom:8px">
+    <span style="font-size:18px">⚠️</span>
+    <span id="rateBannerMsg" style="font-size:12.5px;color:#8A6010;flex:1"></span>
+    <button onclick="document.getElementById('rateBanner').style.display='none'" style="background:none;border:none;color:#8A6010;font-size:16px;cursor:pointer;padding:0 4px">×</button>
+  </div>
+
+  <!-- ① FIRM DETAILS -->
+  <div class="acc-section open" id="acc-firm">
+    <div class="acc-hdr" onclick="toggleSection('firm')">
+      <span class="acc-num">1</span>
+      <span class="acc-title">Firm Details</span>
+      <span class="acc-hint" id="acc-hint-firm"></span>
+      <span class="acc-chevron">›</span>
+    </div>
+    <div class="acc-body" id="acc-body-firm">
+      <div class="grid-3">
+        <div><label>Firm / Company Name:</label><input type="text" id="firmName" placeholder="e.g. Al Bustan Landscapes LLC" oninput="scheduleSave();updateAccordionHints()"></div>
+        <div><label>Prepared By:</label><input type="text" id="preparedBy" placeholder="Name / Designation" oninput="scheduleSave()"></div>
+        <div><label>Contact (Phone / Email):</label><input type="text" id="firmContact" placeholder="contact@firm.com" oninput="scheduleSave()"></div>
+        <div><label><span id="trnLabelEl">TRN (Tax Registration No.)</span> <span style="color:#B03A3A;font-size:10px;font-weight:700;">*</span></label><input type="text" id="firmTRN" placeholder="100XXXXXXXXXXX3" maxlength="15" oninput="scheduleSave()" style="letter-spacing:1.5px;font-weight:600;"></div>
+        <div><label>Trade Licence / CR No.:</label><input type="text" id="firmCR" placeholder="e.g. DED-1234567" oninput="scheduleSave()"></div>
+        <div><label>Firm Address / Emirate:</label><input type="text" id="firmAddr" placeholder="e.g. Dubai, UAE" oninput="scheduleSave()"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ② PROJECT DETAILS -->
+  <div class="acc-section" id="acc-project">
+    <div class="acc-hdr" onclick="toggleSection('project')">
+      <span class="acc-num">2</span>
+      <span class="acc-title">Project Details</span>
+      <span class="acc-hint" id="acc-hint-project"></span>
+      <span class="acc-chevron">›</span>
+    </div>
+    <div class="acc-body" id="acc-body-project">
+      <div class="grid-2">
+        <div><label>Quote Reference:</label><input type="text" id="quoteRef" oninput="scheduleSave()"></div>
+        <div><label>Revision #:</label><input type="number" id="revision" value="1" min="1" oninput="scheduleSave()"></div>
+        <div><label>Client Name:</label><input type="text" id="clientName" placeholder="Client Name" required oninput="scheduleSave();updateAccordionHints()"></div>
+        <div><label>Project Name:</label><input type="text" id="projectName" placeholder="Project Name" required oninput="scheduleSave();updateAccordionHints()"></div>
+        <div><label>Client Address:</label><input type="text" id="clientAddr" placeholder="Client billing address" oninput="scheduleSave()"></div>
+        <div><label>Site Address:</label><input type="text" id="siteAddr" placeholder="Site / work location" oninput="scheduleSave()"></div>
+        <div>
+          <label>Project Type:</label>
+          <select id="projectType" onchange="scheduleSave()">
+            <option>Villa / Private Residence</option>
+            <option>Villa Compound</option>
+            <option>Commercial Complex</option>
+            <option>Hotel / Resort</option>
+            <option>Mixed-Use Development</option>
+            <option>Institutional / Government</option>
+            <option>Urban Public Space / Park</option>
+            <option>Industrial / Warehouse</option>
+          </select>
+        </div>
+        <div></div>
+        <div><label>Start Date:</label><input type="date" id="startDate" oninput="scheduleSave()"></div>
+        <div><label>End Date:</label><input type="date" id="endDate" oninput="scheduleSave()"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ③ SCOPE OF WORK -->
+  <div class="acc-section" id="acc-scope">
+    <div class="acc-hdr" onclick="toggleSection('scope')">
+      <span class="acc-num">3</span>
+      <span class="acc-title">Scope of Work</span>
+      <span class="acc-hint" id="acc-hint-scope"></span>
+      <span class="acc-chevron">›</span>
+    </div>
+    <div class="acc-body" id="acc-body-scope">
+      <div id="zonesContainer"></div>
+      <div class="actions" style="margin-top:4px;">
+        <button type="button" onclick="addZone()">+ Add Zone</button>
+        <button type="button" class="secondary" onclick="addCustomScopeTemplate()">+ New Scope Template</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ④ CHARGES & ADJUSTMENTS -->
+  <div class="acc-section" id="acc-charges">
+    <div class="acc-hdr" onclick="toggleSection('charges')">
+      <span class="acc-num">4</span>
+      <span class="acc-title">Charges &amp; Adjustments</span>
+      <span class="acc-hint" id="acc-hint-charges"></span>
+      <span class="acc-chevron">›</span>
+    </div>
+    <div class="acc-body" id="acc-body-charges">
+      <div class="grid-2">
+        <div><label>Design Charges (<span class="csym">AED</span>):</label><input type="number" id="designCharges" value="0" min="0" oninput="updateTotals()"></div>
+        <div><label>Labour / Install Charges (<span class="csym">AED</span>):</label><input type="number" id="labourCharges" value="0" min="0" oninput="updateTotals()"></div>
+        <div><label>Transport / Mobilisation Charges (<span class="csym">AED</span>):</label><input type="number" id="transportCharges" value="0" min="0" oninput="updateTotals()"></div>
+        <div id="taxPercentRow"><label><span id="taxLabelSpan">VAT</span> on Taxable Items (%):</label><input type="number" id="taxPercent" value="5" min="0" max="100" oninput="updateTotals()"></div>
+        <div id="discountRow">
+          <label style="display:flex;align-items:center;gap:8px;">
+            Discount on Gross Total (%):
+            <button type="button" onclick="toggleDiscountField()" title="Hide this field"
+              style="font-size:11px;padding:1px 8px;background:#B03A3A;color:#fff;border:none;border-radius:3px;cursor:pointer;font-weight:500;">
+              ✕ Hide
+            </button>
+          </label>
+          <input type="number" id="discountPercent" value="0" min="0" max="100" oninput="updateTotals()">
+        </div>
+        <div><label>Provisional Sum / Contingency (%):</label><input type="number" id="provisionalPercent" value="0" min="0" oninput="updateTotals()"></div>
+        <div style="display:none;">
+          <input type="number" id="overheadPercent" value="0" min="0" max="100" oninput="updateTotals()">
+        </div>
+        <div>
+          <label style="display:flex;align-items:center;gap:6px;">
+            Retention (%)
+            <span style="font-size:10px;color:#7E786F;font-weight:400;">held by client — shown for reference</span>
+          </label>
+          <input type="number" id="retentionPercent" value="0" min="0" max="100" oninput="updateTotals()">
+        </div>
+      </div>
+      <button type="button" id="discountRestoreBtn" onclick="toggleDiscountField()"
+        style="display:none;margin-top:8px;font-size:12px;padding:4px 12px;background:#4A8060;color:#fff;border:none;border-radius:4px;cursor:pointer;">
+        + Show Discount Field
+      </button>
+    </div>
+  </div>
+
+  <!-- ⑤ MAINTENANCE -->
+  <div class="acc-section" id="acc-maint">
+    <div class="acc-hdr" onclick="toggleSection('maint')">
+      <span class="acc-num">5</span>
+      <span class="acc-title">Annual Maintenance Contract (AMC)</span>
+      <span class="acc-hint" id="acc-hint-maint"></span>
+      <span class="acc-chevron">›</span>
+    </div>
+    <div class="acc-body" id="acc-body-maint">
+
+      <!-- AMC Header -->
+      <div class="grid-3" style="margin-bottom:14px">
+        <div>
+          <label>Contract Duration (months)</label>
+          <input type="number" id="maintMonths" value="12" min="1"
+            oninput="updateMaint();updateAccordionHints()"/>
+        </div>
+        <div>
+          <label>Visit Frequency</label>
+          <select id="maintFrequency" onchange="updateMaint()">
+            <option value="Weekly">Weekly (52 visits/yr)</option>
+            <option value="Fortnightly">Fortnightly (26 visits/yr)</option>
+            <option value="Monthly" selected>Monthly (12 visits/yr)</option>
+            <option value="Quarterly">Quarterly (4 visits/yr)</option>
+          </select>
+        </div>
+        <div>
+          <label>Rate per Visit (<span class="csym">AED</span>)</label>
+          <input type="number" id="maintPerVisit" value="0" min="0"
+            oninput="updateMaint();updateAccordionHints()"/>
+        </div>
+      </div>
+
+      <!-- AMC Line Items -->
+      <table>
+        <thead><tr>
+          <th style="width:34px">#</th>
+          <th>Service Item</th>
+          <th style="width:114px">Frequency</th>
+          <th style="width:104px">Rate/visit (<span class="csym">AED</span>)</th>
+          <th style="width:58px;text-align:center">Visits</th>
+          <th style="width:110px;text-align:right">Total (<span class="csym">AED</span>)</th>
+          <th style="width:34px"></th>
+        </tr></thead>
+        <tbody id="maintItemsBody"></tbody>
+      </table>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 14px">
+        <button type="button" class="secondary smallbtn" onclick="addMaintItem()">+ Add Service Item</button>
+        <button type="button" class="secondary smallbtn" onclick="loadDefaultAMC()">&#8635; Load Standard Gulf AMC</button>
+      </div>
+
+      <!-- AMC Summary -->
+      <div style="background:var(--green-pale);border:1px solid #c5e0cf;border-radius:var(--radius);padding:14px 16px">
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:12.5px;color:var(--stone);margin-bottom:8px">
+          <span>Frequency: <strong id="amcFreqDisp">Monthly</strong></span>
+          <span>Duration: <strong id="amcDurDisp">12</strong> months</span>
+          <span>Total visits: <strong id="amcVisitsDisp">12</strong></span>
+        </div>
+        <hr style="border-color:#c5e0cf;margin:6px 0"/>
+        <div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--stone);padding:3px 0">
+          <span>Services Subtotal</span><span id="amcServicesTotal">—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:12.5px;color:var(--stone);padding:3px 0">
+          <span>Visit Charges</span><span id="amcVisitTotal">—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700;color:var(--forest);border-top:1px solid #c5e0cf;margin-top:8px;padding-top:8px">
+          <span>AMC Total</span><span id="maintTotal">—</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ⑥ TERMS & CONDITIONS -->
+  <div class="acc-section" id="acc-tnc">
+    <div class="acc-hdr" onclick="toggleSection('tnc')">
+      <span class="acc-num">6</span>
+      <span class="acc-title">Terms &amp; Conditions</span>
+      <span class="acc-hint" id="acc-hint-tnc"></span>
+      <span class="acc-chevron">›</span>
+    </div>
+    <div class="acc-body" id="acc-body-tnc">
+      <textarea id="tnc" rows="5" oninput="scheduleSave();updateAccordionHints()">1. Prices valid for 30 days from proposal date.
+2. Payment terms: 30% mobilisation advance, 60% on practical completion, 10% upon final handover.
+3. All prices are in AED and exclusive of VAT. VAT at 5% will be added to all taxable items as per UAE Federal Tax Authority regulations.
+4. Plant material subject to availability. Substitutions of equivalent species may apply.
+5. This BOQ excludes any statutory fees, municipality permits, or authority approvals unless explicitly stated.
+6. Scope of work is as described herein. Any additional works will be subject to a separate variation order.</textarea>
+    </div>
+  </div>
+
+  <!-- TOTALS — always visible -->
+  <div class="totals-wrap">
+    <div class="totals-block" id="totalsBlock"></div>
+  </div>
+
+</div>
+
+<!-- STICKY BOTTOM BAR -->
+<div id="stickyBar">
+  <div class="sticky-totals" id="stickyTotals"></div>
+  <div class="sticky-exports">
+    <button class="btn-pdf" onclick="downloadPDF()">&#128196; Export as PDF</button>
+    <div class="xl-dropdown-wrap">
+      <button class="btn-xl" onclick="toggleXlDropdown(event)">&#128202; Excel &#9650;</button>
+      <div class="xl-dropdown-menu" id="xlDropdownMenu">
+        <button onclick="closeXlDropdown();downloadExcel()">
+          <span class="xl-opt-label">&#128202; Full BOQ Excel</span>
+          <span class="xl-opt-sub">Rates, totals, VAT, BOS sheets</span>
+        </button>
+        <button onclick="closeXlDropdown();downloadQuantitiesExcel()">
+          <span class="xl-opt-label">&#128203; Scope &amp; Quantities Only</span>
+          <span class="xl-opt-sub">No rates — send to vendors for quotes</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MULTI-SELECT SCOPE PICKER -->
+<div class="scope-picker-overlay" id="scopePickerOverlay" onclick="if(event.target===this)closeScopePicker()">
+  <div class="scope-picker-sheet">
+    <div class="scope-picker-header">
+      <div>
+        <h3 id="scopePickerTitle">Add Scopes</h3>
+        <span id="scopePickerSub">Tap to select, then Add Selected</span>
+      </div>
+      <button onclick="closeScopePicker()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#7E786F;padding:4px 8px;">&times;</button>
+    </div>
+    <div class="scope-picker-list" id="scopePickerList"></div>
+    <div class="scope-picker-footer">
+      <button class="btn-cancel" onclick="closeScopePicker()">Cancel</button>
+      <button class="btn-add" id="scopePickerAddBtn" onclick="confirmScopePicker()">Add Selected</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAYWALL MODAL -->
+
+
+<script>
+(function() {
+  var host = window.location.hostname;
+  var allowed = ['terracostgulf.vercel.app', 'terracostgulf.netlify.app', 'terracostindia.netlify.app', 'terracost.netlify.app', 'localhost', '127.0.0.1', ''];
+  if (!allowed.includes(host)) {
+    document.documentElement.innerHTML = '<html><head><style>*{margin:0;padding:0;box-sizing:border-box;}html,body{width:100%;height:100%;background:#0D2B1E;overflow:hidden;}body{display:flex;align-items:center;justify-content:center;font-family:sans-serif;}</style></head><body><div style="text-align:center;color:#fff;padding:32px;max-width:400px;"><div style="font-size:30px;font-weight:700;color:#A8711E;margin-bottom:14px;">TerraCost</div><p style="opacity:.65;font-size:14px;line-height:1.8;">This tool must be accessed from the official link.<br><br>Please visit:</p><br><a href="https://terracostgulf.vercel.app" style="color:#A8711E;font-weight:700;font-size:16px;">terracostgulf.vercel.app</a></div></body></html>';
+    throw new Error('x');
+  }
+})();
+// ===================== CURRENCIES =====================
+// Gulf Edition — GCC + USD, with per-country tax & display defaults
+// Maps TerraScope's client-request categories onto actual TerraCost scope names.
+// Gulf has no Partitions & Screening or Potted Plants scopes, so those categories go unmapped and are reported instead of guessed at.
+const SOW_TO_SCOPE_GULF = {
+  sow_lawn:'Turf & Lawn', sow_shrubs:'Softscape — Shrubs & Groundcovers',
+  sow_trees:'Softscape — Trees', sow_groundcover:'Softscape — Shrubs & Groundcovers',
+  sow_seasonal:'Softscape — Shrubs & Groundcovers', sow_paving:'Hardscape — Paving',
+  sow_decking:'Hardscape — Paving', sow_steps:'Hardscape — Paving',
+  sow_fence:'Fencing & Gates', sow_pergola:'Hardscape — Structures',
+  sow_water:'Water Features', sow_irrigation:'Irrigation System',
+  sow_lighting:'Outdoor Lighting', sow_seating:'Site Furnishings',
+  sow_planters:'Site Furnishings', sow_greenwall:'Green Walls',
+  sow_soil:'Engineered Soil Media', sow_drainage:'Drainage',
+  sow_signage:'Site Furnishings'
+};
+
+function addMappedScope(zi,name){
+  if(zones[zi].scopes.some(function(sc){return sc.name===name;}))return false;
+  var template=SCOPE_DATA[name]||[];
+  zones[zi].scopes.push({
+    name:name,
+    items:template.map(function(x){
+      var memRate=getRateMem(currency.code,x.desc);
+      var baseRate=x.rate||0;
+      var rate=memRate!==null&&memRate>0?memRate:baseRate;
+      var gstRate=x.gst!==undefined?x.gst:(x.taxable?5:0);
+      return{desc:x.desc,unit:x.unit||'nos',qty:0,rate:rate,notes:'',details:[],hsn:'',unit_other:'',taxable:gstRate>0||x.taxable||false,gstRate:gstRate};
+    })
+  });
+  sortScopes(zones[zi]);
+  return true;
+}
+
+function applySurveyToBOQ(payload){
+  if(!confirm('Add zones and scopes to the current BOQ based on this survey? Existing zones are kept.'))return;
+  var unmapped={};
+  var addedZones=0,addedScopes=0;
+  (payload.zones||[]).forEach(function(z){
+    var zi=zones.findIndex(function(existing){return existing.name.toLowerCase()===(''+z.name).toLowerCase();});
+    if(zi===-1){
+      zi=zones.length;
+      zones.push({id:'zone_'+zi+'_'+Date.now(),name:z.name,scopes:[]});
+      addedZones++;
+    }
+    (z.scopeOfWork||[]).forEach(function(sow){
+      var scopeName=SOW_TO_SCOPE_GULF[sow.catId];
+      if(!scopeName){unmapped[sow.name]=true;return;}
+      if(addMappedScope(zi,scopeName))addedScopes++;
+    });
+  });
+  renderZones();updateTotals();scheduleSave();
+  var msg='Added '+addedZones+' zone(s) and '+addedScopes+' scope(s) from the survey.';
+  var unmappedList=Object.keys(unmapped);
+  if(unmappedList.length)msg+='\n\nNo direct match for: '+unmappedList.join(', ')+'. Add these manually if needed.';
+  alert(msg);
+}
+
+// ===================== SITE SURVEY LOOKUP (from TerraScope) =====================
+const SURVEY_SUPABASE_URL="https://qneumfscfvfylxylxyas.supabase.co";
+const SURVEY_SUPABASE_KEY="sb_publishable_S0n249lSu6mdbEJr2CqMwg_6eKw6nzq";
+
+function loadSurveyById(){
+  var idInput=document.getElementById('surveyIdInput');
+  var id=(idInput.value||'').trim();
+  var statusEl=document.getElementById('surveyStatus');
+  var panel=document.getElementById('surveyPanel');
+  if(!id){statusEl.textContent='Enter a Project ID first.';statusEl.style.color='#B03A3A';return;}
+  statusEl.textContent='Looking up…';statusEl.style.color='#7E786F';
+  panel.style.display='none';
+
+  fetch(SURVEY_SUPABASE_URL+'/rest/v1/rpc/get_survey_by_id',{
+    method:'POST',
+    headers:{
+      'apikey':SURVEY_SUPABASE_KEY,
+      'Authorization':'Bearer '+SURVEY_SUPABASE_KEY,
+      'Content-Type':'application/json'
+    },
+    body:JSON.stringify({target_id:id})
+  }).then(function(res){
+    if(!res.ok)throw new Error('network');
+    return res.json();
+  }).then(function(payload){
+    if(!payload){
+      statusEl.textContent='No survey found with that ID. Check spelling.';
+      statusEl.style.color='#B03A3A';
+      return;
+    }
+    statusEl.textContent='Loaded.';statusEl.style.color='#4E6B52';
+    renderSurveyPanel(payload);
+  }).catch(function(err){
+    console.warn('Survey lookup failed:',err);
+    statusEl.textContent='Could not reach the survey database. Check your connection, or ask for the JSON directly.';
+    statusEl.style.color='#B03A3A';
+  });
+}
+
+function renderSurveyPanel(payload){
+  var panel=document.getElementById('surveyPanel');
+  var p=payload.project||{};
+  var html='<div style="font-weight:700;font-size:14px;margin-bottom:2px;">'+escSurvey(p.name||'Untitled project')+'</div>';
+  html+='<div style="color:#7E786F;margin-bottom:10px;">'+
+    [p.type,p.city,p.client,p.surveyor?('Surveyed by '+p.surveyor):''].filter(Boolean).map(escSurvey).join(' &middot; ')+
+    '</div>';
+  html+='<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#7E786F;margin:10px 0 6px;">Zones ('+(payload.zones||[]).length+')</div>';
+  (payload.zones||[]).forEach(function(z){
+    html+='<div style="border-top:1px solid #EEE;padding:8px 0;">';
+    html+='<div style="font-weight:600;">'+escSurvey(z.name)+' <span style="font-weight:400;color:#7E786F;">— '+escSurvey(z.type)+' zone, '+escSurvey(z.completeness)+' surveyed</span></div>';
+    var conds=z.conditions||{};
+    var condBits=[];
+    ['light','slab','access','wind','water'].forEach(function(k){if(conds[k])condBits.push(k+': '+conds[k]);});
+    if(condBits.length)html+='<div style="font-size:11.5px;color:#7E786F;margin-top:2px;">'+condBits.map(escSurvey).join(' · ')+'</div>';
+    if(z.scopeOfWork&&z.scopeOfWork.length){
+      html+='<div style="font-size:11.5px;margin-top:4px;"><strong>Client asked for:</strong> '+z.scopeOfWork.map(function(sow){return escSurvey(sow.name)+(sow.qty?' ('+escSurvey(sow.qty)+' '+escSurvey(sow.unit)+')':'');}).join(', ')+'</div>';
+    }
+    if(z.clientNotes){html+='<div style="font-size:11.5px;color:#8a6a3a;margin-top:4px;">Note: '+escSurvey(z.clientNotes)+'</div>';}
+    html+='</div>';
+  });
+  html+='<div style="margin-top:12px;font-size:11px;color:#7E786F;">This is a reference summary from TerraScope — build your BOQ line items in the scopes below as usual using these measurements.</div>';
+  html+='<div style="margin-top:12px;padding-top:12px;border-top:1px solid #EEE;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">';
+  html+='<button class="smallbtn" onclick="applySurveyToBOQ(window._lastSurveyPayload)">+ Add zones &amp; scopes from this survey</button>';
+  html+='<span style="font-size:11px;color:#7E786F;">Creates empty scope entries for what the client asked for — you still price and detail each line item.</span>';
+  html+='</div>';
+  window._lastSurveyPayload=payload;
+  panel.innerHTML=html;
+  panel.style.display='block';
+}
+
+function escSurvey(s){s=''+(s==null?'':s);return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+const CURRENCIES = [
+  { code:"AED", symbol:"AED", pdfSymbol:"AED", locale:"en-AE",
+    taxLabel:"VAT",  defaultTaxRate:5,  decimals:2,
+    taxIdLabel:"TRN (Tax Registration No.)",
+    taxAuthority:"UAE Federal Tax Authority (FTA)",
+    tnc:"1. Prices valid for 30 days from proposal date.\n2. Payment terms: 30% mobilisation advance, 60% on practical completion, 10% upon final handover.\n3. All prices are in AED and exclusive of VAT. VAT at 5% will be added to all taxable items as per UAE Federal Tax Authority regulations.\n4. Plant material subject to availability. Substitutions of equivalent species may apply.\n5. This BOQ excludes any statutory fees, municipality permits, or authority approvals unless explicitly stated.\n6. Any additional works beyond this scope subject to a separate variation order." },
+  { code:"SAR", symbol:"SAR", pdfSymbol:"SAR", locale:"en-SA",
+    taxLabel:"VAT",  defaultTaxRate:15, decimals:2,
+    taxIdLabel:"VAT Registration No. (ZATCA)",
+    taxAuthority:"Zakat, Tax and Customs Authority (ZATCA)",
+    tnc:"1. Prices valid for 30 days from proposal date.\n2. Payment terms: 30% mobilisation advance, 60% on practical completion, 10% upon final handover.\n3. All prices are in SAR and exclusive of VAT. VAT at 15% will be added to all taxable items as per ZATCA regulations.\n4. Plant material subject to availability. Substitutions of equivalent species may apply.\n5. This BOQ excludes any statutory fees, municipality permits, or authority approvals unless explicitly stated.\n6. Any additional works beyond this scope subject to a separate variation order." },
+  { code:"QAR", symbol:"QAR", pdfSymbol:"QAR", locale:"en-QA",
+    taxLabel:"Tax",  defaultTaxRate:0,  decimals:2,
+    taxIdLabel:"Commercial Registration (CR) No.",
+    taxAuthority:"Qatar General Tax Authority",
+    tnc:"1. Prices valid for 60 days from proposal date.\n2. Payment terms: 30% mobilisation advance, 60% on practical completion, 10% upon final handover.\n3. All prices are in QAR. Qatar currently has no VAT; applicable taxes will be applied if and when introduced.\n4. Plant material subject to availability. Substitutions of equivalent species may apply.\n5. This BOQ excludes any statutory fees, municipality permits, or authority approvals unless explicitly stated.\n6. Any additional works beyond this scope subject to a separate variation order." },
+  { code:"KWD", symbol:"KWD", pdfSymbol:"KWD", locale:"en-KW",
+    taxLabel:"WHT",  defaultTaxRate:0,  decimals:3,
+    taxIdLabel:"Commercial Registration (CR) No.",
+    taxAuthority:"Kuwait Ministry of Finance",
+    tnc:"1. Prices valid for 60 days from proposal date.\n2. Payment terms: 30% mobilisation advance, 60% on practical completion, 10% upon final handover.\n3. All prices are in KWD. Kuwait currently has no VAT. Government contracts may attract 5% withholding tax.\n4. Plant material subject to availability. Substitutions of equivalent species may apply.\n5. This BOQ excludes any statutory fees, municipality permits, or authority approvals unless explicitly stated.\n6. Any additional works beyond this scope subject to a separate variation order." },
+  { code:"OMR", symbol:"OMR", pdfSymbol:"OMR", locale:"en-OM",
+    taxLabel:"VAT",  defaultTaxRate:5,  decimals:3,
+    taxIdLabel:"Tax Registration No. (TRN)",
+    taxAuthority:"Oman Tax Authority",
+    tnc:"1. Prices valid for 30 days from proposal date.\n2. Payment terms: 30% mobilisation advance, 60% on practical completion, 10% upon final handover.\n3. All prices are in OMR and exclusive of VAT. VAT at 5% will be added to all taxable items as per Oman Tax Authority regulations.\n4. Plant material subject to availability. Substitutions of equivalent species may apply.\n5. This BOQ excludes any statutory fees, municipality permits, or authority approvals unless explicitly stated.\n6. Any additional works beyond this scope subject to a separate variation order." },
+  { code:"BHD", symbol:"BHD", pdfSymbol:"BHD", locale:"en-BH",
+    taxLabel:"VAT",  defaultTaxRate:10, decimals:3,
+    taxIdLabel:"VAT Account No. (NBR)",
+    taxAuthority:"National Bureau for Revenue (NBR), Bahrain",
+    tnc:"1. Prices valid for 30 days from proposal date.\n2. Payment terms: 30% mobilisation advance, 60% on practical completion, 10% upon final handover.\n3. All prices are in BHD and exclusive of VAT. VAT at 10% will be added to all taxable items as per National Bureau for Revenue (NBR) regulations.\n4. Plant material subject to availability. Substitutions of equivalent species may apply.\n5. This BOQ excludes any statutory fees, municipality permits, or authority approvals unless explicitly stated.\n6. Any additional works beyond this scope subject to a separate variation order." },
+  { code:"USD", symbol:"USD", pdfSymbol:"USD", locale:"en-US",
+    taxLabel:"Tax",  defaultTaxRate:0,  decimals:2,
+    taxIdLabel:"Tax ID",
+    taxAuthority:"",
+    tnc:"1. Prices valid for 30 days from proposal date.\n2. Payment terms: 30% mobilisation advance, 60% on practical completion, 10% upon final handover.\n3. All prices are in USD. Applicable taxes will be added as required by local regulations.\n4. Plant material subject to availability. Substitutions of equivalent species may apply.\n5. This BOQ excludes any statutory fees, permits, or authority approvals unless explicitly stated.\n6. Any additional works beyond this scope subject to a separate variation order." }
+];
+let currency = { ...CURRENCIES.find(c=>c.code==='AED') };
+
+function buildCurrencyOptions() {
+  const sel = document.getElementById('currencySelect');
+  sel.innerHTML = CURRENCIES.map(c=>`<option value="${c.code}">${c.code} (${c.symbol})</option>`).join('');
+  sel.value = 'AED';
+}
+
+function fmt(n) {
+  const dp = currency.decimals || 2;
+  try { return new Intl.NumberFormat(currency.locale,{minimumFractionDigits:dp,maximumFractionDigits:dp}).format(Number(n)||0); }
+  catch(e) { return (Number(n)||0).toFixed(dp); }
+}
+
+// ===================== SCOPE LIBRARY =====================
+// rate = AED benchmark rate. taxable = VAT applicability.
+// Gulf Edition — AED benchmark rates (Dubai/Abu Dhabi commercial market, 2025)
+// rate field = AED benchmark rate.
+// VAT = 5% flat on all taxable items (UAE Federal Law No. 8 of 2017)
+const SCOPE_DATA = {
+  'Preliminaries': [
+    {desc:'Site Hoarding & Security (temporary)',          unit:'rmt',     rate:45, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Temporary Site Office & Facilities',           unit:'lumpsum', rate:0, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'HSE Officer & Safety Provisions',              unit:'month',   rate:3500, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Site Signage & Project Boards',                unit:'nos',     rate:650, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Project Manager / Site Foreman (per month)',   unit:'month',   rate:8500, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Equipment Mobilisation & Demobilisation',      unit:'lumpsum', rate:0, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Waste Removal & Skip Hire',                    unit:'load',    rate:280, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Water & Temporary Power Connection',           unit:'lumpsum', rate:0, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Municipality / Authority Permits & Fees',      unit:'lumpsum', rate:0, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'As-Built Drawings & O&M Manuals',              unit:'lumpsum', rate:0, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Defects Liability Period — maintenance visits',unit:'month',   rate:2200, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Insurance (CAR / Third Party Liability)',      unit:'lumpsum', rate:0, hsn:'', details:[], taxable:true, gst:5 }
+  ],
+  'Site Preparation': [
+    {desc:'Excavation & Removal',            unit:'cum', rate:55, hsn:'', details:[], taxable:true,  gst:5 },
+    {desc:'Grubbing & Clearing',             unit:'sqm', rate:8, hsn:'', details:[], taxable:true,  gst:5 },
+    {desc:'Fine Grading & Levelling',        unit:'sqm', rate:6, hsn:'', details:[], taxable:true,  gst:5 },
+    {desc:'Imported Fill Soil / Top Soil',   unit:'cum', rate:120,  hsn:'', details:[], taxable:true,  gst:5 },
+    {desc:'Compaction & Sub-base Prep',      unit:'sqm', rate:12, hsn:'', details:[], taxable:true,  gst:5 }
+  ],
+  'Softscape — Trees': [
+    {desc:'Date Palm (Phoenix dactylifera) supply & plant',    unit:'nos', rate:850, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Ghaf Tree (Prosopis cineraria) supply & plant',     unit:'nos', rate:420, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Ficus Nitida (Column) supply & plant',              unit:'nos', rate:380, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Conocarpus Tree supply & plant',                    unit:'nos', rate:280, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Washingtonia Palm supply & plant',                  unit:'nos', rate:650, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Areca Palm (cluster) supply & plant',               unit:'nos', rate:320, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Neem Tree (Azadirachta indica) supply & plant',     unit:'nos', rate:260, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Acacia Tree supply & plant',                        unit:'nos', rate:220, hsn:'', details:[], taxable:true, gst:5 }
+  ],
+  'Softscape — Shrubs & Groundcovers': [
+    {desc:'Bougainvillea (trellis/standard) supply & plant',   unit:'nos', rate:45, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Ixora coccinea supply & plant',                     unit:'nos', rate:18, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Lantana camara supply & plant',                     unit:'nos', rate:12, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Duranta (Golden / Blue) supply & plant',            unit:'nos', rate:14, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Oleander (Nerium) supply & plant',                  unit:'nos', rate:16, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Agave / Succulent specimen supply & plant',         unit:'nos', rate:35, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Groundcover planting (mixed species)',               unit:'sqm', rate:22, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Hedge planting (Ficus / Duranta)',                  unit:'rmt', rate:38, hsn:'', details:[], taxable:true, gst:5 }
+  ],
+  'Turf & Lawn': [
+    {desc:'Bermuda Grass (Cynodon) turf laying',               unit:'sqm', rate:28, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Zoysia Grass turf laying',                          unit:'sqm', rate:32, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Artificial Turf supply & install (35mm pile)',      unit:'sqm', rate:95, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Artificial Turf supply & install (50mm premium)',   unit:'sqm', rate:145, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Artificial Turf — Infill (silica sand + rubber)',   unit:'sqm', rate:18, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Lawn edging strip (aluminium)',                     unit:'rmt', rate:12, hsn:'', details:[], taxable:true, gst:5 }
+  ],
+  'Irrigation System': [
+    {desc:'Drip irrigation system (complete)',                  unit:'sqm', rate:18, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Bubbler system (tree pits)',                        unit:'nos', rate:45, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Pop-up sprinkler system (lawn)',                    unit:'sqm', rate:22, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Main supply line (HDPE 63mm)',                      unit:'rmt', rate:28, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Solenoid valve & controller (per zone)',            unit:'nos', rate:220, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Smart controller / timer unit',                    unit:'nos', rate:650, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Filter & pressure regulator assembly',             unit:'nos', rate:180, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Fertigation / dosing unit',                        unit:'nos', rate:1200, hsn:'', details:[], taxable:true, gst:5 }
+  ],
+  'Hardscape — Paving': [
+    {desc:'Porcelain tile paving (600×600, outdoor grade)',    unit:'sqm', rate:145, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Natural travertine paving',                        unit:'sqm', rate:220, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Concrete block paving (interlocking)',              unit:'sqm', rate:85, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Gravel / Pea gravel surface',                      unit:'sqm', rate:28, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Stamped / Exposed aggregate concrete',             unit:'sqm', rate:95, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Kerbstone / Edging (precast concrete)',            unit:'rmt', rate:35, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Steps / Stair treads (stone)',                     unit:'rmt', rate:185, gst:5, hsn:'', details:[], taxable:true, gst:5 }
+  ],
+  'Hardscape — Structures': [
+    {desc:'Pergola — steel structure (powder-coated)',         unit:'sqm', rate:280, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Pergola — aluminium louvre roof',                  unit:'sqm', rate:420, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Shade sail / HDPE shade structure',                unit:'sqm', rate:95, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Retaining wall (block / reinforced)',              unit:'sqm', rate:185, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Timber deck (hardwood / composite)',               unit:'sqm', rate:165, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Raised planter box (GRC / metal)',                 unit:'nos', rate:680, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Boundary wall (block + render)',                   unit:'rmt', rate:320, gst:5, hsn:'', details:[], taxable:true, gst:5 }
+  ],
+  'Fencing & Gates': [
+    {desc:'Galvanised steel fence (powder-coated)',           unit:'rmt', rate:185, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Aluminium picket fence',                          unit:'rmt', rate:145, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Automated sliding gate (steel)',                  unit:'nos', rate:4500, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Pedestrian gate (steel / aluminium)',             unit:'nos', rate:850, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Timber screen / privacy fence',                   unit:'sqm', rate:220, gst:5, hsn:'', details:[], taxable:true, gst:5 }
+  ],
+  'Outdoor Lighting': [
+    {desc:'Pathway bollard lights (LED)',                    unit:'nos', rate:180, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Uplights / Spotlights (LED, IP68)',               unit:'nos', rate:145, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Feature / accent lights (LED strip)',             unit:'rmt', rate:45, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Floodlight (LED, pole-mounted)',                  unit:'nos', rate:380, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Underground cabling (per metre)',                 unit:'rmt', rate:22, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Distribution board / control panel',             unit:'nos', rate:950, gst:5, hsn:'', details:[], taxable:true, gst:5 }
+  ],
+  'Water Features': [
+    {desc:'Decorative fountain (pre-fabricated)',            unit:'nos', rate:3500, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Reflecting pool / water body (civil works)',      unit:'sqm', rate:450, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Swimming pool surround (incl. coping)',           unit:'sqm', rate:285, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Pool / water feature pump & filter',             unit:'nos', rate:1800, gst:5, hsn:'', details:[], taxable:true, gst:5 }
+  ],
+  'Green Walls': [
+    {desc:'Modular green wall panel system (supply)',        unit:'sqm', rate:380, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Panel installation labour',                      unit:'sqm', rate:120, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Planting into panels (per sqm)',                 unit:'sqm', rate:65, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'GI frame / sub-structure (wall-mounted)',        unit:'sqm', rate:145, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Drip / fertigation system for green wall',       unit:'sqm', rate:85, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Growing substrate / media (green wall)',         unit:'litre',rate:4, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Waterproofing membrane (behind wall)',           unit:'sqm', rate:55, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Controller / timer unit',                       unit:'nos', rate:950, gst:5, hsn:'', details:[], taxable:true, gst:5 }
+  ],
+  'Interior Plantscaping': [
+    {desc:'Specimen indoor plant (supply & install)',       unit:'nos', rate:280, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Premium FRP planter (indoor)',                  unit:'nos', rate:320, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Decorative pebble topdressing',                 unit:'nos', rate:18, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Indoor potting mix',                            unit:'litre',rate:2.5, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Plant styling & arrangement (lump sum)',        unit:'lumpsum',rate:0, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Monthly maintenance visit',                    unit:'nos', rate:350, gst:5, hsn:'', details:[], taxable:true, gst:5 }
+  ],
+  'Drainage': [
+    {desc:'Surface channel drain (ACO / linear)',          unit:'rmt', rate:85, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Catch basin / gully trap',                     unit:'nos', rate:280, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Soakaway / infiltration pit',                  unit:'nos', rate:450, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Drainage pipe (uPVC 100mm)',                   unit:'rmt', rate:32, hsn:'', details:[], taxable:true, gst:5 }
+  ],
+  'Site Furnishings': [
+    {desc:'Outdoor bench (powder-coated steel/timber)',   unit:'nos', rate:850, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Outdoor dining table & chairs (set)',          unit:'nos', rate:2200, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Litter / waste bin (outdoor)',                 unit:'nos', rate:380, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Signage / wayfinding (per panel)',             unit:'nos', rate:450, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Planting / tree guards (metal)',               unit:'nos', rate:120, gst:5, hsn:'', details:[], taxable:true, gst:5 }
+  ],
+  'Engineered Soil Media': [
+    {desc:'Desert landscape mix (wadi sand blend)',       unit:'cum', rate:145, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Terrace / rooftop lightweight mix',            unit:'cum', rate:220, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Green wall substrate',                        unit:'litre',rate:4, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Biochar soil amendment (per bag 25L)',         unit:'nos', rate:28, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Tree pit growing media',                      unit:'cum', rate:180, gst:5, hsn:'', details:[], taxable:true, gst:5 },
+    {desc:'Xeric / low-water mix',                       unit:'cum', rate:165, gst:5, hsn:'', details:[], taxable:true, gst:5 }
+  ]
+};
+
+// ===================== SCOPE EXECUTION ORDER =====================
+// Mirrors real site execution sequence — scopes auto-sort to this order
+const SCOPE_ORDER = [
+  'Preliminaries',
+  'Site Preparation',
+  'Drainage',
+  'Engineered Soil Media',
+  'Irrigation System',
+  'Hardscape — Paving',
+  'Hardscape — Structures',
+  'Fencing & Gates',
+  'Turf & Lawn',
+  'Softscape — Trees',
+  'Softscape — Shrubs & Groundcovers',
+  'Green Walls',
+  'Water Features',
+  'Outdoor Lighting',
+  'Interior Plantscaping',
+  'Site Furnishings'
+];
+
+function sortScopes(zone) {
+  zone.scopes.sort((a, b) => {
+    const ai = SCOPE_ORDER.indexOf(a.name);
+    const bi = SCOPE_ORDER.indexOf(b.name);
+    return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+  });
+}
+
+// ===================== UNIT HELPER =====================
+function unitOptionsByLine(desc) {
+  desc = (desc||"").toLowerCase();
+  if (desc.includes('lump')||desc.includes('allowance')||desc.includes('provisional')||desc.includes('permit')||desc.includes('insurance'))
+    return ["lumpsum","nos","other"];
+  if (desc.includes('month')||desc.includes('officer')||desc.includes('foreman')||desc.includes('manager')||desc.includes('visit')||desc.includes('maintenance'))
+    return ["month","nos","lumpsum","other"];
+  if (desc.includes('sprinkler')||desc.includes('drip')) return ["sqm","sqft","nos","other"];
+  if (desc.includes('turf')||desc.includes('grass')||desc.includes('lawn')) return ["sqm","sqft","other"];
+  if (desc.includes('soil')||desc.includes('earth')||desc.includes('mulch')||desc.includes('compost')||desc.includes('substrate')||desc.includes('media')||desc.includes('mix'))
+    return ["cum","litre","bag","tonne","kg","load","other"];
+  if (desc.includes('palm')||desc.includes('tree')||desc.includes('plant')||desc.includes('shrub'))
+    return ["nos","other"];
+  if (desc.includes('groundcover')||desc.includes('turf')) return ["sqm","sqft","other"];
+  if (desc.includes('wall')||desc.includes('deck')||desc.includes('paving')||desc.includes('path')||desc.includes('travertine')||desc.includes('porcelain'))
+    return ["sqm","sqft","other"];
+  if (desc.includes('light')||desc.includes('bollard')||desc.includes('spotlight')||desc.includes('floodlight'))
+    return ["nos","set","other"];
+  if (desc.includes('cabling')||desc.includes('strip')||desc.includes('fence')||desc.includes('edging')||desc.includes('kerb')||desc.includes('step')||desc.includes('stair')||desc.includes('drain')||desc.includes('hedge'))
+    return ["rmt","m","rft","other"];
+  if (desc.includes('pipe')||desc.includes('line')||desc.includes('main')||desc.includes('hdpe'))
+    return ["rmt","m","other"];
+  if (desc.includes('pergola')||desc.includes('shade')||desc.includes('structure')||desc.includes('retaining'))
+    return ["sqm","sqft","other"];
+  if (desc.includes('load')||desc.includes('skip')||desc.includes('waste'))
+    return ["load","nos","other"];
+  return ["nos","sqm","sqft","cum","rmt","month","lumpsum","other"];
+}
+
+let zones = [];
+let openDetails = {};
+
+// ===================== SAVE / LOAD =====================
+let saveTimer = null;
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveState, 700);
+}
+
+function getState() {
+  const metaFields = ['quoteRef','revision','firmName','preparedBy','firmContact','firmTRN','firmCR','firmAddr',
+                      'clientName','clientAddr','projectName','siteAddr','projectType',
+                      'startDate','endDate'];
+  const meta = {};
+  metaFields.forEach(id => { const el=document.getElementById(id); if(el) meta[id]=el.value; });
+  const chargeFields = ['designCharges','labourCharges','transportCharges','taxPercent','discountPercent','provisionalPercent','overheadPercent','retentionPercent'];
+  const charges = {};
+  chargeFields.forEach(id => { const el=document.getElementById(id); if(el) charges[id]=el.value; });
+  return {
+    _v: 4,
+    meta, currencyCode: currency.code, zones, charges,
+    maint: {
+      months:    document.getElementById('maintMonths')?.value||12,
+      frequency: document.getElementById('maintFrequency')?.value||'Monthly',
+      perVisit:  document.getElementById('maintPerVisit')?.value||0,
+      items:     maintItems
+    },
+    tnc: document.getElementById('tnc')?.value||''
+  };
+}
+
+function saveState() {
+  try {
+    localStorage.setItem('boq_gulf_v1', JSON.stringify(getState()));
+    const el = document.getElementById('saveStatus');
+    if (el) { el.textContent = 'Saved ' + new Date().toLocaleTimeString(); setTimeout(()=>{ if(el) el.textContent=''; },3000); }
+  } catch(e) {}
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem('boq_gulf_v1');
+    if (!raw) return false;
+    const s = JSON.parse(raw);
+    if (!s || !s.zones) return false;
+    const metaFields = ['quoteRef','revision','firmName','preparedBy','firmContact','firmTRN','firmCR','firmAddr',
+                        'clientName','clientAddr','projectName','siteAddr','projectType',
+                        'startDate','endDate'];
+    metaFields.forEach(id => { const el=document.getElementById(id); if(el&&s.meta&&s.meta[id]!==undefined) el.value=s.meta[id]; });
+    if (s.currencyCode) {
+      const picked = CURRENCIES.find(c=>c.code===s.currencyCode);
+      if (picked) { currency={...picked}; document.getElementById('currencySelect').value=s.currencyCode; }
+    }
+    if (Array.isArray(s.zones)) {
+      // ── Migration: v3 → v4 (sitePrep array → Project-wide zone scope) ──
+      if (s.sitePrep && s.sitePrep.length > 0) {
+        const spScope = {
+          name: 'Site Preparation',
+          items: s.sitePrep.map(it=>({
+            desc:it.desc||'', unit:it.unit||'cum', qty:it.qty||0, rate:it.rate||0,
+            notes:'', details:it.details||[], taxable:it.taxable!==false,
+            unit_other:it.unit_other||'', hsn:it.hsn||''
+          }))
+        };
+        if (!s.zones[0]?.projectWide) {
+          s.zones.unshift({ id:'zone_pw', name:'Project-wide', projectWide:true, scopes:[spScope] });
+        } else if (!s.zones[0].scopes.some(sc=>sc.name==='Site Preparation')) {
+          s.zones[0].scopes.unshift(spScope);
+        }
+      }
+      // Ensure zones[0] is always project-wide
+      if (s.zones.length===0 || !s.zones[0].projectWide) {
+        s.zones.unshift({ id:'zone_pw', name:'Project-wide', projectWide:true, scopes:[] });
+      }
+      zones = s.zones;
+      zones.forEach(z => sortScopes(z));
+      // Migrate: ensure all items have gstRate field
+      zones.forEach(z=>z.scopes.forEach(sc=>sc.items.forEach(it=>{
+        if (it.gstRate === undefined) it.gstRate = it.taxable ? 18 : 0;
+      })));
+      // Migrate: back-fill AED rates where rate is 0 but SCOPE_DATA has a rate
+      const gulfCodes = ['AED','SAR','QAR','KWD','OMR','BHD'];
+      if (gulfCodes.includes(s.currencyCode) || gulfCodes.includes(currency.code)) {
+        zones.forEach(z=>z.scopes.forEach(sc=>{
+          const template = SCOPE_DATA[sc.name];
+          if (!template) return;
+          sc.items.forEach(it=>{
+            if ((it.rate === 0 || it.rate === undefined) && it.desc) {
+              const tmpl = template.find(t=>t.desc === it.desc);
+              if (tmpl && tmpl.rate) it.rate = tmpl.rate;
+            }
+          });
+        }));
+      }
+    }
+    openDetails = {};
+    const chargeFields = ['designCharges','labourCharges','transportCharges','taxPercent','discountPercent','provisionalPercent','overheadPercent','retentionPercent'];
+    chargeFields.forEach(id => { const el=document.getElementById(id); if(el&&s.charges&&s.charges[id]!==undefined) el.value=s.charges[id]; });
+    if (s.maint) {
+      const mn = document.getElementById('maintMonths');
+      if (mn && s.maint.months !== undefined) mn.value = s.maint.months;
+      const mf = document.getElementById('maintFrequency');
+      if (mf && s.maint.frequency) mf.value = s.maint.frequency;
+      const mp = document.getElementById('maintPerVisit');
+      if (mp && s.maint.perVisit !== undefined) mp.value = s.maint.perVisit;
+      if (Array.isArray(s.maint.items)) maintItems = s.maint.items;
+    }
+    if (s.tnc) document.getElementById('tnc').value = s.tnc;
+    return true;
+  } catch(e) { console.warn('Load failed:',e); return false; }
+}
+
+function saveNow() { clearTimeout(saveTimer); saveState(); }
+
+function exportJSON() {
+  const state = getState();
+  const blob = new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const slug = (state.meta.projectName||'BOQ').replace(/[^a-zA-Z0-9]/g,'_').slice(0,30);
+  a.href=url; a.download=`${slug}_${new Date().toISOString().slice(0,10)}.json`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function triggerImport() { document.getElementById('importFile').click(); }
+
+function readImport(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const s = JSON.parse(e.target.result);
+      if (!s.zones||!s.meta) { alert('Invalid BOQ file.'); return; }
+      if (!confirm('Load this BOQ? Current data will be replaced.')) return;
+      localStorage.setItem('boq_gulf_v1', JSON.stringify(s));
+      location.reload();
+    } catch(err) { alert('Could not read file: '+err.message); }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+function newBOQ() {
+  if (!confirm('Start a new blank BOQ? All current data will be cleared.')) return;
+  localStorage.removeItem('boq_gulf_v1');
+  location.reload();
+}
+
+// ===================== CURRENCY =====================
+function setCurrency() {
+  const sel = document.getElementById('currencySelect');
+  const prev = currency.code;
+  const picked = CURRENCIES.find(c=>c.code===sel.value)||CURRENCIES[0];
+  currency = {...picked};
+
+  // Update currency symbol spans
+  document.querySelectorAll('.csym').forEach(el=>{ el.textContent=currency.symbol; });
+
+  // Update tax label
+  const tls = document.getElementById('taxLabelSpan');
+  if(tls) tls.textContent = currency.taxLabel||'Tax';
+
+  // FIX 1: Update VAT% to per-currency correct default
+  const taxEl = document.getElementById('taxPercent');
+  if(taxEl) taxEl.value = (currency.defaultTaxRate !== undefined) ? currency.defaultTaxRate : 5;
+
+  // FIX 4: Update TRN field label to per-country correct label
+  const trnLabelEl = document.getElementById('trnLabelEl');
+  if(trnLabelEl) trnLabelEl.textContent = currency.taxIdLabel || 'TRN (Tax Registration No.)';
+
+  // FIX 6: Update T&C if still at default text
+  const tncEl = document.getElementById('tnc');
+  if(tncEl && currency.tnc) {
+    const currentTnc = tncEl.value.trim();
+    const isStillDefault = CURRENCIES.some(c => {
+      const def = (c.tnc||'').replace(/\\n/g,'\n');
+      return currentTnc === def.trim();
+    });
+    if(!currentTnc || isStillDefault) {
+      tncEl.value = currency.tnc.replace(/\\n/g,'\n');
+    }
+  }
+
+  // FIX 3: Show rate warning banner when switching away from AED
+  const banner = document.getElementById('rateBanner');
+  if(banner) {
+    if(prev === 'AED' && currency.code !== 'AED') {
+      banner.style.display = 'flex';
+      document.getElementById('rateBannerMsg').textContent =
+        'Note: Benchmark rates shown are AED-calibrated. Update to ' +
+        currency.code + ' local market rates before issuing this BOQ.';
+    } else if(currency.code === 'AED') {
+      banner.style.display = 'none';
+    }
+  }
+
+  renderZones();
+  updateTotals();
+}
+
+// Site prep is now a scope inside the Project-wide zone — no separate block needed
+
+// ===================== ZONES / SCOPES =====================
+function addZone() {
+  const idx = zones.length; // zones[0] is always project-wide
+  zones.push({ id:'zone_'+idx, name:'Zone '+idx, scopes:[] });
+  renderZones(); updateTotals();
+}
+function removeZone(idx) { if(idx===0) return; zones.splice(idx,1); renderZones(); updateTotals(); }
+
+// ===================== RATE MEMORY =====================
+function getRateMem(code, desc) {
+  try {
+    const v = localStorage.getItem('rl:'+code+':'+(desc||'').toLowerCase().trim());
+    return v !== null ? parseFloat(v) : null;
+  } catch(e) { return null; }
+}
+function setRateMem(code, desc, rate) {
+  if (!desc || !rate || rate <= 0) return;
+  try { localStorage.setItem('rl:'+code+':'+(desc||'').toLowerCase().trim(), rate); } catch(e) {}
+}
+function saveItemRate(zi,si,ii) {
+  const item = zones[zi].scopes[si].items[ii];
+  if (item.desc && item.rate > 0) setRateMem(currency.code, item.desc, item.rate);
+}
+
+function addScope(zi) {
+  const sel = document.getElementById('scopeSelect_'+zi);
+  const name = sel.value; if(!name) return;
+  if(zones[zi].scopes.some(sc=>sc.name===name)) return;
+  const template = SCOPE_DATA[name]||[];
+  zones[zi].scopes.push({
+    name,
+    items: template.map(x=>{
+      const memRate  = getRateMem(currency.code, x.desc);
+      const baseRate = x.rate || 0;
+      const rate     = memRate !== null && memRate > 0 ? memRate : baseRate;
+      const gstRate  = x.gst !== undefined ? x.gst : (x.taxable ? 5 : 0);
+      return {
+        desc: x.desc, unit: x.unit||'nos', qty: 0, rate,
+        notes: '', details: [], hsn: '', unit_other: '',
+        taxable: gstRate > 0 || x.taxable || false,
+        gstRate
+      };
+    })
+  });
+  sortScopes(zones[zi]);
+  renderZones(); updateTotals();
+}
+
+function addCustomScopeTemplate() {
+  const name = prompt('New Scope Name:'); if(!name) return;
+  if(!SCOPE_DATA[name]) SCOPE_DATA[name]=[];
+  alert('Scope "'+name+'" created. Add it inside any Zone via the Scope dropdown.');
+  renderZones();
+}
+function removeScope(zi,si) { zones[zi].scopes.splice(si,1); renderZones(); updateTotals(); }
+
+function updateItem(zi,si,ii,what,value) {
+  const item = zones[zi].scopes[si].items[ii];
+  if(item.details.length) return;
+  if(what==='qty') item.qty=parseFloat(value)||0;
+  if(what==='rate') { item.rate=parseFloat(value)||0; saveItemRate(zi,si,ii); }
+  updateTotals();
+}
+function updateField(zi,si,ii,field,value) {
+  const item = zones[zi].scopes[si].items[ii];
+  item[field]=value;
+  if(field==='desc') {
+    const memRate = getRateMem(currency.code, value);
+    if (memRate !== null && memRate > 0 && item.rate === 0) item.rate = memRate;
+    renderZones();
+  }
+  updateTotals();
+}
+function updateNotes(zi,si,ii,value) { zones[zi].scopes[si].items[ii].notes=value; scheduleSave(); }
+function setItemTax(zi,si,ii,value) {
+  const item = zones[zi].scopes[si].items[ii];
+  item.taxable = !!value;
+  updateTotals();
+}
+function setTaxable(zi,si,ii,checked) { setItemTax(zi,si,ii,checked); }
+function updateUnit(zi,si,ii,value) {
+  const item=zones[zi].scopes[si].items[ii]; item.unit=value;
+  if(value!=='other') item.unit_other='';
+  renderZones(); updateTotals();
+}
+function updateUnitOther(zi,si,ii,value) { zones[zi].scopes[si].items[ii].unit_other=value; updateTotals(); }
+
+function addLineItem(zi,si) {
+  zones[zi].scopes[si].items.push({desc:"",unit:"nos",qty:0,rate:0,notes:"",details:[],taxable:true,unit_other:"",hsn:""});
+  renderZones(); updateTotals();
+}
+function deleteLineItem(zi,si,ii) { zones[zi].scopes[si].items.splice(ii,1); renderZones(); updateTotals(); }
+
+// Sub-items
+function toggleDetails(zi,si,ii) {
+  const key=`${zi}_${si}_${ii}`; openDetails[key]=!openDetails[key]; renderZones();
+}
+function addDetailRow(zi,si,ii) {
+  zones[zi].scopes[si].items[ii].details.push({name:"",qty:0,rate:0,unit:"nos",unit_other:"",hsn:""});
+  openDetails[`${zi}_${si}_${ii}`]=true;
+  updateDetailTotal(zi,si,ii); renderZones();
+}
+function deleteDetailRow(zi,si,ii,subi) {
+  zones[zi].scopes[si].items[ii].details.splice(subi,1);
+  openDetails[`${zi}_${si}_${ii}`]=true;
+  updateDetailTotal(zi,si,ii); renderZones();
+}
+function updateDetailField(zi,si,ii,subi,field,value) {
+  const det=zones[zi].scopes[si].items[ii].details[subi];
+  if(field==='qty'||field==='rate') det[field]=parseFloat(value)||0;
+  else det[field]=value;
+  updateDetailTotal(zi,si,ii);
+}
+function updateDetailUnit(zi,si,ii,subi,value) {
+  const det=zones[zi].scopes[si].items[ii].details[subi];
+  det.unit=value; if(value!=='other') det.unit_other='';
+  renderZones();
+}
+function updateDetailUnitOther(zi,si,ii,subi,value) {
+  zones[zi].scopes[si].items[ii].details[subi].unit_other=value;
+}
+function updateDetailTotal(zi,si,ii) {
+  const item=zones[zi].scopes[si].items[ii];
+  const sum=item.details.reduce((t,s)=>t+((parseFloat(s.qty)||0)*(parseFloat(s.rate)||0)),0);
+  const qtyT=item.details.reduce((t,s)=>t+(parseFloat(s.qty)||0),0);
+  item.qty=qtyT;
+  item.rate=(item.details.length>0&&qtyT>0)?+(sum/qtyT).toFixed(2):0;
+  updateTotals();
+}
+
+// ===================== RENDER ZONES =====================
+function renderZones() {
+  const zc = document.getElementById('zonesContainer');
+  zc.innerHTML = '';
+  zones.forEach((zone,zi)=>{
+    let itemSerial = 0;
+    const isPW = zi===0;
+    let html = `<div class="zone-block${isPW?' zone-pw':''}" id="${zone.id}">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+        ${isPW?'<span class="zone-pw-label">Project-wide</span>':'<label style="margin:0;white-space:nowrap;">Zone Name:</label>'}
+        <input type="text" value="${zone.name}" onchange="zones[${zi}].name=this.value;scheduleSave();"
+          style="flex:1;min-width:140px;margin:0;" ${isPW?'placeholder="Project-wide"':''}>
+        ${isPW?'':'<button type="button" class="secondary smallbtn" onclick="removeZone('+zi+')" style="background:#B03A3A;">&times; Delete Zone</button>'}
+      </div>
+      <div class="actions" style="margin-bottom:10px;">
+        <button type="button" class="secondary smallbtn" onclick="openScopePicker(${zi})"
+          style="background:#265C3C;color:#fff;border-color:#265C3C;padding:7px 14px;">
+          + Add Scope
+        </button>
+      </div>`;
+
+    zone.scopes.forEach((sc,si)=>{
+      html += `<div style="margin-bottom:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+          <strong style="color:#5a4020;">${sc.name}</strong>
+          <button type="button" class="rowbtn" onclick="removeScope(${zi},${si})" style="background:#B03A3A;color:#fff;border-color:#B03A3A;">&times; Remove</button>
+        </div>
+        <table>
+          <thead><tr>
+            <th style="width:40px;">#</th>
+            <th>Description &amp; Spec</th>
+            <th>Unit</th>
+            <th style="width:68px;">Qty</th>
+            <th style="width:92px;">Rate (${currency.symbol})</th>
+            <th style="width:88px;">Tax Code</th>
+            <th style="width:95px;text-align:right;">Total (${currency.symbol})</th>
+            <th style="width:${currency.code==='INR'?'58':'38'}px;text-align:center;">VAT?</th>
+            <th>Actions</th>
+          </tr></thead>
+          <tbody>`;
+
+      sc.items.forEach((item,ii)=>{
+        itemSerial++;
+        const serial = `${zi===0?'PW':zi}.${String(itemSerial).padStart(2,'0')}`;
+        const isDetail = item.details&&item.details.length;
+        const key = `${zi}_${si}_${ii}`;
+        const detailClass = openDetails[key]?"details-box details-visible":"details-box details-hidden";
+        const unitChoice = item.unit||unitOptionsByLine(item.desc)[0]||"nos";
+
+        html += `
+          <tr>
+            <td class="serial">${serial}</td>
+            <td>
+              <input type="text" value="${item.desc.replace(/"/g,'&quot;')}"
+                onchange="updateField(${zi},${si},${ii},'desc',this.value)"
+                title="${item.desc.replace(/"/g,'&quot;')}"
+                style="width:100%;min-width:150px;overflow:hidden;text-overflow:ellipsis;" placeholder="Description">
+              <input type="text" class="notes-inp"
+                value="${(item.notes||'').replace(/"/g,'&quot;')}"
+                oninput="updateNotes(${zi},${si},${ii},this.value)"
+                placeholder="Spec / notes (optional)">
+            </td>
+            <td>
+              <select class="unit-inline" onchange="updateUnit(${zi},${si},${ii},this.value)">
+                ${unitOptionsByLine(item.desc).map(u=>`<option value="${u}"${u===unitChoice?' selected':''}>${u}</option>`).join('')}
+              </select>
+              <input class="unit-custom-inp" type="text" placeholder="Unit"
+                value="${item.unit_other||''}"
+                style="display:${unitChoice==='other'?'inline-block':'none'}"
+                oninput="updateUnitOther(${zi},${si},${ii},this.value)">
+            </td>
+            <td>
+              <input type="number" min="0" step="any" value="${item.qty}" style="width:62px;"
+                onchange="updateItem(${zi},${si},${ii},'qty',this.value)"
+                oninput="this.value=this.value.replace(/[^0-9.]/g,'')"
+                ${isDetail?'readonly tabindex="-1"':''}>
+            </td>
+            <td>
+              <input type="number" min="0" step="any" value="${item.rate}" style="width:86px;"
+                onchange="updateItem(${zi},${si},${ii},'rate',this.value);saveItemRate(${zi},${si},${ii})"
+                oninput="this.value=this.value.replace(/[^0-9.]/g,'')"
+                ${isDetail?'readonly tabindex="-1"':''}>
+            </td>
+            <td>
+              <input type="text" style="width:82px;" value="${item.hsn||''}"
+                onchange="updateField(${zi},${si},${ii},'hsn',this.value)" placeholder="Tax Code">
+            </td>
+            <td style="text-align:right;">${currency.symbol}${fmt(item.qty*item.rate)}</td>
+            <td style="text-align:center;">
+              <input type="checkbox" ${item.taxable?"checked":""} title="VAT applicable?"
+                onchange="setItemTax(${zi},${si},${ii},this.checked)">
+            </td>
+            <td>
+              <div class="row-actions">
+                <button type="button" class="rowbtn" onclick="deleteLineItem(${zi},${si},${ii})" title="Delete">&times;</button>
+                <button type="button" class="rowbtn" style="background:#2B5E3F;color:#fff;border-color:#2B5E3F;min-width:60px;"
+                  onclick="toggleDetails(${zi},${si},${ii})">${openDetails[key]?'▲ Hide':'▼ Details'}</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="9" style="padding:4px 8px;background:#fdfcf8;">
+              <div id="details_${zi}_${si}_${ii}" class="${detailClass}">
+                <div style="font-weight:600;margin-bottom:4px;font-size:13px;">
+                  Sub-items for "${item.desc||'this line'}" — qty &amp; weighted avg. rate roll up to parent row:
+                </div>
+                <table style="width:100%;margin-bottom:6px;">
+                  <thead class="subtablehead"><tr>
+                    <th>Name</th><th>Qty</th><th>Unit</th>
+                    <th>Rate (${currency.symbol})</th>
+                    <th>Tax Code</th><th style="text-align:right;">Subtotal</th><th></th>
+                  </tr></thead>
+                  <tbody>
+                    ${(item.details||[]).map((sub,subi)=>{
+                      const subU=sub.unit||unitOptionsByLine(item.desc||sub.name)[0]||"nos";
+                      return `<tr>
+                        <td><input type="text" value="${sub.name.replace(/"/g,'&quot;')}"
+                          title="${sub.name.replace(/"/g,'&quot;')}"
+                          style="width:100%;overflow:hidden;text-overflow:ellipsis;"
+                          oninput="updateDetailField(${zi},${si},${ii},${subi},'name',this.value)"></td>
+                        <td><input type="number" min="0" step="any" value="${sub.qty||0}" style="width:60px;"
+                          oninput="this.value=this.value.replace(/[^0-9.]/g,'');updateDetailField(${zi},${si},${ii},${subi},'qty',this.value)"></td>
+                        <td>
+                          <select class="unit-inline" onchange="updateDetailUnit(${zi},${si},${ii},${subi},this.value)">
+                            ${unitOptionsByLine(item.desc||sub.name).map(u=>`<option value="${u}"${u===subU?' selected':''}>${u}</option>`).join('')}
+                          </select>
+                          <input class="unit-custom-inp" type="text" placeholder="Unit"
+                            value="${sub.unit_other||''}"
+                            style="display:${subU==='other'?'inline-block':'none'}"
+                            oninput="updateDetailUnitOther(${zi},${si},${ii},${subi},this.value)">
+                        </td>
+                        <td><input type="number" min="0" step="any" value="${sub.rate||0}" style="width:80px;"
+                          oninput="this.value=this.value.replace(/[^0-9.]/g,'');updateDetailField(${zi},${si},${ii},${subi},'rate',this.value)"></td>
+                        <td><input type="text" style="width:72px;" value="${sub.hsn||''}"
+                          oninput="updateDetailField(${zi},${si},${ii},${subi},'hsn',this.value)" placeholder="Tax Code"></td>
+                        <td style="text-align:right;">${currency.symbol}${fmt((sub.qty||0)*(sub.rate||0))}</td>
+                        <td><button class="rowbtn" type="button"
+                          onclick="deleteDetailRow(${zi},${si},${ii},${subi})">&times;</button></td>
+                      </tr>`;
+                    }).join('')}
+                  </tbody>
+                </table>
+                <button class="secondary smallbtn" type="button"
+                  onclick="addDetailRow(${zi},${si},${ii})">+ Add Sub-item</button>
+              </div>
+            </td>
+          </tr>`;
+      });
+
+      html += `
+          <tr><td colspan="9" style="text-align:left;padding:6px 8px;">
+            <button type="button" class="secondary smallbtn" onclick="addLineItem(${zi},${si})">+ Add Line Item</button>
+          </td></tr>
+          </tbody></table></div>`;
+    });
+
+    html += '</div>';
+    zc.innerHTML += html;
+  });
+  updateTotals();
+}
+
+// ===================== TOTALS =====================
+function getTaxSplitTotals() {
+  let taxable=0, nonTaxable=0;
+  zones.forEach(z=>z.scopes.forEach(sc=>sc.items.forEach(it=>{
+    const t=(it.qty||0)*(it.rate||0);
+    if(it.taxable) taxable+=t; else nonTaxable+=t;
+  })));
+  return {taxableSubtotal:taxable, nonTaxableSubtotal:nonTaxable, gstTotal:0};
+}
+
+function updateTotals() {
+  const {taxableSubtotal, nonTaxableSubtotal} = getTaxSplitTotals();
+  const worksSubtotal = taxableSubtotal + nonTaxableSubtotal;
+
+  const design    = +document.getElementById('designCharges').value||0;
+  const labour    = +document.getElementById('labourCharges').value||0;
+  const transport = +document.getElementById('transportCharges').value||0;
+
+  const overheadP   = +document.getElementById('overheadPercent')?.value||0;
+  const overheadAmt = worksSubtotal * overheadP/100;
+
+  const provisionalP   = +document.getElementById('provisionalPercent').value||0;
+  const provisionalAmt = worksSubtotal * provisionalP/100;
+
+  const taxP   = +document.getElementById('taxPercent').value||0;
+  const taxAmt = taxableSubtotal * taxP/100;
+
+  const preTaxTotal     = worksSubtotal + design + labour + transport + overheadAmt + provisionalAmt;
+  const grossBeforeDiscount = preTaxTotal + taxAmt;
+  const discountP   = +document.getElementById('discountPercent').value||0;
+  const discountAmt = grossBeforeDiscount * discountP/100;
+  const grand       = grossBeforeDiscount - discountAmt;
+
+  const retentionP   = +document.getElementById('retentionPercent')?.value||0;
+  const retentionAmt = grand * retentionP/100;
+
+  const { grandTotal:maintTotal, freqSel:maintFreqSel, months:maintMonths } = getMaintTotals();
+
+  const s  = currency.symbol;
+  const tl = currency.taxLabel||'VAT';
+  const rows = [
+    ['Subtotal — Taxable Works',     s+fmt(taxableSubtotal)],
+    ['Subtotal — Non-Taxable Works', s+fmt(nonTaxableSubtotal)],
+    design    >0 ? ['Design Charges',             s+fmt(design)]    : null,
+    labour    >0 ? ['Labour / Install Charges',   s+fmt(labour)]    : null,
+    transport >0 ? ['Transport / Mobilisation',   s+fmt(transport)] : null,
+    overheadP >0 ? [`Contractor O&P @ ${overheadP}%`,    s+fmt(overheadAmt),   'provrow'] : null,
+    provisionalP>0? [`Provisional Sum @ ${provisionalP}%`,s+fmt(provisionalAmt),'provrow'] : null,
+    taxAmt    >0 ? [`${tl} @ ${taxP}%`,           s+fmt(taxAmt)]    : null,
+    discountP >0 ? [`Discount @ ${discountP}%`, '-'+s+fmt(discountAmt),'discrow'] : null,
+  ].filter(Boolean);
+
+  let html = rows.map(r=>`<div class="trow ${r[2]||''}"><span class="tlabel">${r[0]}</span><span class="tval">${r[1]}</span></div>`).join('');
+  html += `<div class="trow grandrow"><span class="tlabel">CONTRACT SUM (excl. Retention)</span><span class="tval">${s}${fmt(grand)}</span></div>`;
+  if(retentionP>0) {
+    html += `<div class="trow" style="font-size:12.5px;color:#A8711E;margin-top:4px;">
+      <span class="tlabel">Retention @ ${retentionP}% (held by client)</span>
+      <span class="tval" style="color:#A8711E;">-${s}${fmt(retentionAmt)}</span></div>`;
+    html += `<div class="trow" style="font-size:13px;font-weight:600;color:rgba(255,255,255,0.9);border-top:1px solid rgba(255,255,255,0.1);margin-top:6px;padding-top:6px;">
+      <span class="tlabel" style="color:rgba(255,255,255,0.7);">Net Payable (after retention)</span>
+      <span class="tval">${s}${fmt(grand - retentionAmt)}</span></div>`;
+  }
+  if(maintTotal>0) html+=`<div class="trow" style="font-size:13px;color:#5DC98A;margin-top:6px;">
+    <span class="tlabel">AMC — ${maintFreqSel} · ${maintMonths} months</span>
+    <span class="tval">${s}${fmt(maintTotal)}</span></div>`;
+
+  document.getElementById('totalsBlock').innerHTML = html;
+  scheduleSave();
+  updateAccordionHints();
+}
+
+// ===================== EXCEL EXPORT =====================
+function exportExcel() {
+  try {
+  if (typeof XLSX === 'undefined') {
+    alert('Excel library not loaded. Check your internet connection and refresh.');
+    return;
+  }
+
+  const meta = {
+    firmName:    document.getElementById('firmName').value,
+    preparedBy:  document.getElementById('preparedBy').value,
+    firmContact: document.getElementById('firmContact').value,
+    firmTRN:     document.getElementById('firmTRN')?.value||'',
+    firmCR:      document.getElementById('firmCR')?.value||'',
+    firmAddr:    document.getElementById('firmAddr')?.value||'',
+    quoteRef:    document.getElementById('quoteRef').value,
+    revision:    document.getElementById('revision').value||'1',
+    client:      document.getElementById('clientName').value,
+    clientAddr:  document.getElementById('clientAddr').value,
+    project:     document.getElementById('projectName').value,
+    siteAddr:    document.getElementById('siteAddr').value,
+    type:        document.getElementById('projectType').value,
+    start:       document.getElementById('startDate').value,
+    end:         document.getElementById('endDate').value,
+  };
+
+  const {taxableSubtotal, nonTaxableSubtotal} = getTaxSplitTotals();
+  const worksSub     = taxableSubtotal + nonTaxableSubtotal;
+
+  const design       = +document.getElementById('designCharges').value||0;
+  const labour       = +document.getElementById('labourCharges').value||0;
+  const transport    = +document.getElementById('transportCharges').value||0;
+  const exOverheadP  = +document.getElementById('overheadPercent')?.value||0;
+  const exOverheadAmt = worksSub * exOverheadP/100;
+  const taxP         = +document.getElementById('taxPercent').value||0;
+  const taxAmt       = taxableSubtotal * taxP / 100;
+  const provP        = +document.getElementById('provisionalPercent').value||0;
+  const provAmt      = worksSub * provP / 100;
+  const discP        = +document.getElementById('discountPercent').value||0;
+  const exPreTax     = worksSub + design + labour + exOverheadAmt + provAmt;
+  const grossBD      = exPreTax + taxAmt;
+  const discAmt      = grossBD * discP / 100;
+  const grand        = grossBD - discAmt;
+  const exRetP       = +document.getElementById('retentionPercent')?.value||0;
+  const exRetAmt     = grand * exRetP/100;
+  const { grandTotal:maintTot, freqSel:maintFreqSel, months:maintMths } = getMaintTotals();
+  const CC           = currency.code;
+
+  // 9 columns: # | Description | Spec/Notes | Unit | Qty | Rate | Tax Code | Total | Tax?
+  const NC = 9;
+  const rows = [];
+  const merges = [];
+
+  function R(...cells) { rows.push(cells); return rows.length - 1; }
+  function blank()     { R(...Array(NC).fill('')); }
+  function section(title) {
+    const r = R(title, ...Array(NC-1).fill(''));
+    merges.push({s:{r,c:0}, e:{r,c:NC-1}});
+    return r;
+  }
+
+  // ── Firm header ──────────────────────────────────────
+  R(meta.firmName||'',                       '','','', 'Quote Ref:',  meta.quoteRef||'',  '','','');
+  R('Prepared by: '+(meta.preparedBy||'—'),  '','','', 'Revision:',   'Rev '+meta.revision,'','','');
+  R('Contact: '+(meta.firmContact||'—'),     '','','', 'Date Issued:',new Date().toLocaleDateString('en-GB'),'','','');
+  R('Currency: '+CC+' ('+currency.pdfSymbol+')', '','','', '','','','','');
+  blank();
+
+  // ── Project details ──────────────────────────────────
+  section('CLIENT & PROJECT DETAILS');
+  let pr;
+  pr = R('Client:',  meta.client||'',     '','', 'Project:', meta.project||'',  '','','');
+  merges.push({s:{r:pr,c:1},e:{r:pr,c:3}}); merges.push({s:{r:pr,c:5},e:{r:pr,c:8}});
+  pr = R('Address:', meta.clientAddr||'', '','', 'Site:',    meta.siteAddr||'', '','','');
+  merges.push({s:{r:pr,c:1},e:{r:pr,c:3}}); merges.push({s:{r:pr,c:5},e:{r:pr,c:8}});
+  pr = R('Type:',    meta.type||'',       '','', 'Dates:',   (meta.start||'—')+' to '+(meta.end||'—'),'','','');
+  merges.push({s:{r:pr,c:1},e:{r:pr,c:3}}); merges.push({s:{r:pr,c:5},e:{r:pr,c:8}});
+  blank();
+
+  // ── Zones (including Project-wide at index 0) ─────────────
+  const COL_HEADERS = ['#','Description','Spec / Notes','Unit','Qty','Rate ('+CC+')','Tax Code','Total ('+CC+')','Tax?'];
+
+  zones.forEach((zone,zi)=>{
+    section(zi===0 ? 'PROJECT-WIDE' : 'ZONE '+zi+': '+zone.name);
+    let zoneTotal = 0;
+    let serial    = 0;
+
+    zone.scopes.forEach((sc)=>{
+      // Scope sub-header
+      const scr = R('','Scope: '+sc.name,'','','','','','','');
+      merges.push({s:{r:scr,c:1},e:{r:scr,c:NC-1}});
+      R(...COL_HEADERS);
+
+      let scopeTotal = 0;
+      sc.items.forEach((itm)=>{
+        const unitLbl  = itm.unit==='other'?(itm.unit_other||''):itm.unit||'nos';
+        const itemTot  = (itm.qty||0)*(itm.rate||0);
+        if((itm.qty||0) > 0) {
+          serial++;
+          scopeTotal += itemTot;
+          zoneTotal  += itemTot;
+          R((zi===0?'PW':zi)+'.'+String(serial).padStart(2,'0'),
+            itm.desc||'', itm.notes||'', unitLbl,
+            itm.qty||0, itm.rate||0, itm.hsn||'', itemTot, itm.taxable?'Yes':'No');
+          // Sub-items
+          (itm.details||[]).forEach(sub=>{
+            const subU = sub.unit==='other'?(sub.unit_other||''):sub.unit||'nos';
+            R('', '    — '+(sub.name||''), '', subU,
+              sub.qty||0, sub.rate||0, sub.hsn||'',
+              (sub.qty||0)*(sub.rate||0), '');
+          });
+        }
+      });
+      // Scope subtotal row
+      const str2 = R('', sc.name+' — Subtotal', '','','','','', scopeTotal, '');
+      merges.push({s:{r:str2,c:1},e:{r:str2,c:6}});
+    });
+
+    // Zone total row
+    blank();
+    const ztr = R('','ZONE '+(zi===0?'PROJECT-WIDE':zi)+' TOTAL','','','','','', zoneTotal,'');
+    merges.push({s:{r:ztr,c:1},e:{r:ztr,c:6}});
+    blank();
+  });
+
+  // ── Cost Summary ──────────────────────────────────────
+  section('COST SUMMARY');
+  const tlEx = currency.taxLabel||'Tax';
+  const summaryData = [
+    ['Subtotal — Taxable Works',     taxableSubtotal],
+    ['Subtotal — Non-Taxable Works', nonTaxableSubtotal],
+    ['Design Charges',               design],
+    ['Labour / Install Charges',     labour],
+    ['Transport / Mobilisation',     transport],
+    exOverheadP>0 ? ['Contractor O&P @ '+exOverheadP+'%', exOverheadAmt] : null,
+    provP>0       ? ['Provisional Sum @ '+provP+'%',       provAmt]       : null,
+    taxAmt>0      ? [tlEx+' @ '+taxP+'%',                  taxAmt]        : null,
+    discP>0       ? ['Discount @ '+discP+'%',              -discAmt]      : null,
+    ['CONTRACT SUM (excl. Retention)',                     grand],
+    exRetP>0 ? ['Retention @ '+exRetP+'% (held by client)', -exRetAmt] : null,
+    exRetP>0 ? ['Net Payable (after retention)',          grand-exRetAmt] : null,
+    maintTot>0 ? ['AMC — '+maintFreqSel+' · '+maintMths+' months', maintTot] : null,
+  ].filter(Boolean);
+
+  summaryData.forEach(([label, val])=>{
+    const sr = R('', label,'','','','','', val,'');
+    merges.push({s:{r:sr,c:1},e:{r:sr,c:6}});
+  });
+  blank();
+
+  // ── Terms & Conditions ────────────────────────────────
+  section('TERMS & CONDITIONS');
+  document.getElementById('tnc').value.split('\n').forEach(line=>{
+    const lr = R('', line,'','','','','','','');
+    merges.push({s:{r:lr,c:1},e:{r:lr,c:NC-1}});
+  });
+  blank();
+
+  // ── Authorisation ─────────────────────────────────────
+  section('AUTHORISATION');
+  R('Prepared by','','','','Accepted by (Client)','','','','');
+  R('Name:',  meta.preparedBy||'', '','', 'Name:',    '____________________________','','','');
+  R('Firm:',  meta.firmName||'',   '','', 'Company:', '____________________________','','','');
+  R('Signature:', '____________________________','','', 'Signature:', '____________________________','','','');
+  R('Date:',      '____________________________','','', 'Date:',      '____________________________','','','');
+
+  // ── Build worksheet ───────────────────────────────────
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!merges'] = merges;
+  ws['!cols']   = [
+    {wch:11}, // #
+    {wch:35}, // Description
+    {wch:24}, // Spec/Notes
+    {wch:9},  // Unit
+    {wch:8},  // Qty
+    {wch:14}, // Rate
+    {wch:12}, // Tax Code
+    {wch:18}, // Total
+    {wch:6}   // Tax?
+  ];
+
+  // Apply number format to Qty, Rate, Total columns
+  for (let r = 0; r < rows.length; r++) {
+    ['E','F','H'].forEach(col => {
+      const ref = col+(r+1);
+      if (ws[ref] && typeof ws[ref].v === 'number') ws[ref].z = '#,##0.00';
+    });
+  }
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'BOQ');
+
+  // Second sheet: Summary only
+  const sumRows = [
+    ['COST SUMMARY — '+meta.project,''],
+    ['Quote Ref: '+meta.quoteRef, 'Rev '+meta.revision],
+    ['',''],
+    ...summaryData.map(([l,v])=>[l,v]),
+    ['',''],
+    maintTot>0 ? ['AMC — ' + maintFreqSel + ' · ' + maintMths + ' months', maintTot] : ['Maintenance Contract', 'Not included'],
+  ];
+  const ws2 = XLSX.utils.aoa_to_sheet(sumRows);
+  ws2['!cols'] = [{wch:42},{wch:18}];
+  for (let r = 0; r < sumRows.length; r++) {
+    const ref = 'B'+(r+1);
+    if (ws2[ref] && typeof ws2[ref].v === 'number') ws2[ref].z = '#,##0.00';
+  }
+  XLSX.utils.book_append_sheet(wb, ws2, 'Summary');
+
+  const slug = (meta.project||'BOQ').replace(/[^a-zA-Z0-9]/g,'_').replace(/__+/g,'_').slice(0,28);
+  XLSX.writeFile(wb, `${slug}_Rev${meta.revision||1}_${new Date().toISOString().slice(0,10)}.xlsx`);
+  } catch(err) {
+    alert('Excel (XLSX) export error: ' + err.message);
+    console.error('XLSX export failed:', err);
+  }
+}
+
+// ===================== PDF EXPORT =====================
+function downloadPDF() {
+  if (needsLeadCapture()) { gateExport(downloadPDF, 'pdf'); return; }
+  try {
+  // PDF-safe formatter — forces Latin numerals regardless of currency locale
+  const dp = currency.decimals || 2;
+  const fmtPdf = n => {
+    try { return new Intl.NumberFormat('en-US',{minimumFractionDigits:dp,maximumFractionDigits:dp}).format(Number(n)||0); }
+    catch(e) { return (Number(n)||0).toFixed(dp); }
+  };
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape' });
+  const pw = doc.internal.pageSize.getWidth();
+  const ph = doc.internal.pageSize.getHeight();
+
+  const meta = {
+    firmName:    document.getElementById('firmName').value,
+    preparedBy:  document.getElementById('preparedBy').value,
+    firmContact: document.getElementById('firmContact').value,
+    firmTRN:     document.getElementById('firmTRN')?.value||'',
+    firmCR:      document.getElementById('firmCR')?.value||'',
+    firmAddr:    document.getElementById('firmAddr')?.value||'',
+    quoteRef:    document.getElementById('quoteRef').value,
+    revision:    document.getElementById('revision').value||'1',
+    client:      document.getElementById('clientName').value,
+    clientAddr:  document.getElementById('clientAddr').value,
+    project:     document.getElementById('projectName').value,
+    siteAddr:    document.getElementById('siteAddr').value,
+    type:        document.getElementById('projectType').value,
+    start:       document.getElementById('startDate').value,
+    end:         document.getElementById('endDate').value,
+  };
+
+  // ---- Header ----
+  doc.setFillColor(20,60,100); doc.rect(0,0,pw,22,'F');
+  doc.setFontSize(14); doc.setFont("helvetica","bold"); doc.setTextColor(255,245,220);
+  doc.text("BILL OF QUANTITIES & COST ESTIMATE", pw/2, 9, {align:"center"});
+  doc.setFontSize(9); doc.setFont("helvetica","normal");
+  const firmLine = [meta.firmName, meta.preparedBy, meta.firmContact].filter(Boolean).join('  |  ');
+  doc.text(firmLine||"", pw/2, 16, {align:"center"});
+  doc.setTextColor(0,0,0);
+
+  // ---- Firm title block with TRN ----
+  let y = 28;
+  doc.setFontSize(9); doc.setFont("helvetica","normal");
+  // Firm info block (left)
+  doc.setFillColor(235,240,248); doc.roundedRect(10,y,pw/2-14,22,2,2,'F');
+  doc.setFont("helvetica","bold"); doc.setFontSize(10);
+  doc.setTextColor(20,60,100);
+  if(meta.firmName) doc.text(meta.firmName, 13, y+7);
+  doc.setFont("helvetica","normal"); doc.setFontSize(8.5); doc.setTextColor(60,60,60);
+  if(meta.firmAddr) doc.text(meta.firmAddr, 13, y+12);
+  if(meta.firmContact) doc.text(meta.firmContact, 13, y+17);
+
+  // TRN box — right side of firm block
+  if(meta.firmTRN) {
+    doc.setFillColor(255,248,230); doc.roundedRect(pw/2-2,y,pw/2+2,22,2,2,'F');
+    doc.setFont("helvetica","bold"); doc.setFontSize(8); doc.setTextColor(120,80,10);
+    doc.text("Tax Registration No. (TRN)", pw/2+1, y+7);
+    doc.setFont("helvetica","bold"); doc.setFontSize(12); doc.setTextColor(20,60,100);
+    doc.text(meta.firmTRN, pw/2+1, y+15);
+    if(meta.firmCR) {
+      doc.setFont("helvetica","normal"); doc.setFontSize(8); doc.setTextColor(80,80,80);
+      doc.text("Trade Licence: "+meta.firmCR, pw/2+1, y+21);
+    }
+  }
+  doc.setTextColor(0,0,0);
+  y += 28;
+
+  // ---- Project info block ----
+  doc.setFontSize(9); doc.setFont("helvetica","normal");
+  doc.setFillColor(248,243,234); doc.roundedRect(10,y,pw-20,30,2,2,'F');
+  doc.setFont("helvetica","bold");   doc.text("Client:",     13,  y+6);
+  doc.setFont("helvetica","normal"); doc.text(meta.client||"-", 28, y+6);
+  doc.setFont("helvetica","bold");   doc.text("Project:",    13,  y+11);
+  doc.setFont("helvetica","normal"); doc.text(meta.project||"-", 28, y+11);
+  if(meta.clientAddr) { doc.setFont("helvetica","bold"); doc.text("Addr:",13,y+16); doc.setFont("helvetica","normal"); doc.text(meta.clientAddr,28,y+16,{maxWidth:pw/2-32}); }
+  if(meta.siteAddr)   { doc.setFont("helvetica","bold"); doc.text("Site:", 13,y+21); doc.setFont("helvetica","normal"); doc.text(meta.siteAddr,28,y+21,{maxWidth:pw/2-32}); }
+  doc.text(`Type: ${meta.type}`, 13, y+26);
+
+  // Right column
+  doc.setFont("helvetica","bold");   doc.text("Quote Ref:", pw/2+2, y+6);
+  doc.setFont("helvetica","normal"); doc.text(meta.quoteRef||"-",   pw/2+24, y+6);
+  doc.setFont("helvetica","bold");   doc.text("Revision:",  pw/2+2, y+11);
+  doc.setFont("helvetica","normal"); doc.text("Rev "+meta.revision,  pw/2+22, y+11);
+  doc.setFont("helvetica","bold");   doc.text("Dates:",     pw/2+2, y+16);
+  doc.setFont("helvetica","normal"); doc.text(`${meta.start||"-"} to ${meta.end||"-"}`, pw/2+16, y+16);
+  doc.setFont("helvetica","bold");   doc.text("Currency:",  pw/2+2, y+21);
+  doc.setFont("helvetica","normal"); doc.text(`${currency.code} (${currency.pdfSymbol})`, pw/2+20, y+21);
+  doc.setFont("helvetica","bold");   doc.text("Date Issued:", pw/2+2, y+26);
+  doc.setFont("helvetica","normal"); doc.text(new Date().toLocaleDateString('en-GB'),   pw/2+24, y+26);
+
+  y += 38;
+  const S = currency.pdfSymbol;
+
+  function checkPage(needed) {
+    if (y + needed > ph - 20) { doc.addPage(); y = 18; }
+  }
+
+  // ---- Zones (Project-wide at index 0, named zones follow) ----
+  zones.forEach((zone,zi)=>{
+    checkPage(16);
+    doc.setFontSize(12); doc.setFont("helvetica","bold"); doc.setTextColor(80,50,15);
+    doc.text(zi===0 ? `Project-wide` : `Zone ${zi}: ${zone.name}`, 12, y); y+=5;
+    doc.setTextColor(0,0,0);
+    let zoneTotal=0; let globalSerial=0;
+
+    zone.scopes.forEach((sc)=>{
+      checkPage(14);
+      doc.setFontSize(10); doc.setFont("helvetica","bold"); doc.setTextColor(41,90,150);
+      doc.text(`  Scope: ${sc.name}`, 14, y); y+=4;
+      doc.setTextColor(0,0,0);
+
+      const head=[['#','Description','Unit','Qty',`Rate (${S})`,`Total (${S})`,'Tax?']];
+      const body=[];
+
+      sc.items.forEach((itm)=>{
+        const unitLbl = itm.unit==="other"?(itm.unit_other||""):itm.unit||"nos";
+        if((itm.qty||0) > 0) {
+          globalSerial++;
+          const serial=`${zi===0?'PW':zi}.${String(globalSerial).padStart(2,'0')}`;
+          const itemTotal=(itm.qty||0)*(itm.rate||0);
+          zoneTotal+=itemTotal;
+          // Description + spec/notes combined
+          const descText = itm.notes ? `${itm.desc}\n  ${itm.notes}` : itm.desc;
+          body.push([serial, descText, unitLbl, itm.qty,
+            fmtPdf(itm.rate||0),
+            fmtPdf(itemTotal),
+            itm.taxable?'Yes':'No'
+          ]);
+          if(itm.details&&itm.details.length) {
+            body.push([{content:'  Sub-items:',colSpan:7,styles:{fontStyle:'bold',fillColor:[252,252,240],fontSize:8}}]);
+            itm.details.forEach(sub=>{
+              const subU=sub.unit==="other"?(sub.unit_other||""):sub.unit||"nos";
+              body.push([
+                '',
+                {content:'   - '+sub.name, styles:{fontStyle:'italic',textColor:[76,83,116],fontSize:8}},
+                subU, sub.qty,
+                fmtPdf(sub.rate||0),
+                fmtPdf((sub.qty||0)*(sub.rate||0)),
+                ''
+              ]);
+            });
+          }
+        }
+      });
+
+      if(body.length) {
+        doc.autoTable({
+          head, body, theme:'grid', startY:y+1,
+          styles:{font:'helvetica',fontSize:8.5,cellPadding:1.8,valign:'middle'},
+          headStyles:{fillColor:[41,128,185],textColor:255},
+          columnStyles:{0:{halign:'center',cellWidth:12},3:{halign:'right',cellWidth:10},4:{halign:'right',cellWidth:28},5:{halign:'right',cellWidth:28},6:{halign:'center',cellWidth:12}},
+          alternateRowStyles:{fillColor:[245,247,250]},
+          margin:{left:12,right:12}
+        });
+        y = doc.lastAutoTable.finalY+3;
+      }
+    });
+
+    checkPage(12);
+    doc.setFontSize(10); doc.setFont("helvetica","bold"); doc.setTextColor(34,100,60);
+    doc.text(`${zi===0?'Project-wide':'Zone '+zi} Total: ${S}${fmtPdf(zoneTotal)}`, pw-13, y+4, {align:'right'});
+    doc.setFont("helvetica","normal"); doc.setTextColor(0,0,0);
+    y+=12;
+  });
+
+  // ---- Summary Table ----
+  const {taxableSubtotal:pdfTaxable, nonTaxableSubtotal:pdfNonTax} = getTaxSplitTotals();
+  const worksSubtotal = pdfTaxable + pdfNonTax;
+  const tlPdf     = currency.taxLabel||'VAT';
+  const design    = +document.getElementById('designCharges').value||0;
+  const labour    = +document.getElementById('labourCharges').value||0;
+  const transport = +document.getElementById('transportCharges').value||0;
+  const overheadP = +document.getElementById('overheadPercent')?.value||0;
+  const overheadAmt = worksSubtotal * overheadP/100;
+  const taxP      = +document.getElementById('taxPercent').value||0;
+  const taxAmt    = pdfTaxable * taxP / 100;
+  const provP     = +document.getElementById('provisionalPercent').value||0;
+  const provAmt   = worksSubtotal*provP/100;
+  const discP     = +document.getElementById('discountPercent').value||0;
+  const preTax    = worksSubtotal+design+labour+overheadAmt+provAmt;
+  const grossBD   = preTax+taxAmt;
+  const discAmt   = grossBD*discP/100;
+  const grand     = grossBD-discAmt;
+  const retentionP   = +document.getElementById('retentionPercent')?.value||0;
+  const retentionAmt = grand * retentionP/100;
+  const { grandTotal:maintTot, freqSel:maintFreqSel, months:maintMths } = getMaintTotals();
+
+  const summaryBody = [
+    ['Subtotal — Taxable Works',     `${S}${fmtPdf(pdfTaxable)}`],
+    ['Subtotal — Non-Taxable Works', `${S}${fmtPdf(pdfNonTax)}`],
+    ['Design Charges',                                  `${S}${fmtPdf(design)}`],
+    ['Labour / Install Charges',                        `${S}${fmtPdf(labour)}`],
+    ['Transport / Mobilisation',                        `${S}${fmtPdf(transport)}`],
+    overheadP>0 ? [`Contractor O&P @ ${overheadP}%`,   `${S}${fmtPdf(overheadAmt)}`]   : null,
+    provP>0  ? [`Provisional Sum @ ${provP}%`,          `${S}${fmtPdf(provAmt)}`]       : null,
+    taxAmt>0 ? [`${tlPdf} @ ${taxP}%`, `${S}${fmtPdf(taxAmt)}`] : null,
+    discP>0  ? [`Discount @ ${discP}%`,                `-${S}${fmt(discAmt)}`]       : null,
+    ['CONTRACT SUM (excl. Retention)',                  `${S}${fmtPdf(grand)}`],
+    retentionP>0 ? [`Retention @ ${retentionP}% (held by client)`, `-${S}${fmt(retentionAmt)}`] : null,
+    retentionP>0 ? ['Net Payable (after retention)',    `${S}${fmtPdf(grand-retentionAmt)}`] : null,
+    maintTot>0 ? ['AMC — ' + maintFreqSel + ' · ' + maintMths + ' months', S+fmtPdf(maintTot)] : null,
+  ].filter(Boolean);
+
+  checkPage(30);
+  doc.autoTable({
+    head:[['Section','Amount']], body:summaryBody,
+    startY:y, tableWidth:180, margin:{left:(pw-180)/2,right:(pw-180)/2},
+    styles:{font:'helvetica',fontSize:10,cellPadding:2},
+    headStyles:{fillColor:[66,133,244],textColor:255},
+    columnStyles:{1:{halign:'right'}},
+    alternateRowStyles:{fillColor:[242,245,252]},
+    didParseCell:function(data){
+      const raw = data.cell.raw;
+      if(raw==='CONTRACT SUM (excl. Retention)'||raw===`${S}${fmtPdf(grand)}`){
+        data.cell.styles.fontStyle='bold'; data.cell.styles.fontSize=12;
+        data.cell.styles.textColor=[20,20,160]; data.cell.styles.fillColor=[230,235,255];
+      }
+      if(raw==='Net Payable (after retention)'||raw===`${S}${fmtPdf(grand-retentionAmt)}`){
+        data.cell.styles.fontStyle='bold'; data.cell.styles.fontSize=11;
+        data.cell.styles.textColor=[10,80,10]; data.cell.styles.fillColor=[220,240,220];
+      }
+      if(typeof raw==='string'&&(raw.startsWith('-')||raw.startsWith('Retention'))){
+        data.cell.styles.textColor=[170,100,10];
+      }
+      if(typeof raw==='string'&&raw.startsWith('Contractor O&P')){
+        data.cell.styles.textColor=[40,80,160];
+      }
+      if(typeof raw==='string'&&raw.startsWith('Maintenance')){
+        data.cell.styles.fontStyle='bold'; data.cell.styles.textColor=[40,160,80];
+      }
+    }
+  });
+  y = doc.lastAutoTable.finalY+10;
+
+  // ---- AMC Service Schedule ----
+  if(maintTot > 0 && maintItems.length > 0) {
+    checkPage(20);
+    doc.setFontSize(9); doc.setFont("helvetica","bold"); doc.setTextColor(40,100,60);
+    doc.text("Maintenance Contract — Service Schedule:", 13, y); y+=6;
+    maintItems.forEach((item) => {
+      const visits = Math.round((FREQ_VISITS[item.freq]||12)*maintMths/12);
+      const total  = (item.rate||0)*visits;
+      checkPage(14);
+      doc.setFontSize(8); doc.setFont("helvetica","normal"); doc.setTextColor(50,50,50);
+      const desc  = '\u2022 '+(item.service||'(no description)')+' \u2014 '+item.freq+' \u2014 '+visits+' visits \u2014 '+S+fmtPdf(total);
+      const lines = doc.splitTextToSize(desc, pw-28);
+      lines.forEach(ln => { checkPage(5); doc.text('  '+ln, 13, y); y+=4.5; });
+      const persons = item.persons||0;
+      const hours   = item.hours||0;
+      const incList = item.inclusions||[];
+      if(persons>0 || hours>0 || incList.length>0) {
+        doc.setFontSize(7); doc.setTextColor(110,110,110);
+        const metaParts=[];
+        if(persons>0) metaParts.push(persons+' person'+(persons>1?'s':''));
+        if(hours>0)   metaParts.push(hours+' hrs/visit');
+        const segments=[];
+        if(metaParts.length>0) segments.push('     '+metaParts.join(' \u00b7 '));
+        if(incList.length>0)   segments.push('     Includes: '+incList.join(', '));
+        segments.forEach(segment=>{
+          const wrapped=doc.splitTextToSize(segment,pw-32);
+          wrapped.forEach(ln=>{ checkPage(4); doc.text(ln,13,y); y+=3.5; });
+        });
+      }
+      y+=2;
+    });
+    y+=4;
+  }
+
+  // ---- T&C ----
+  checkPage(30);
+  doc.setFontSize(10); doc.setFont("helvetica","bold"); doc.setTextColor(0,0,0);
+  doc.text("Terms & Conditions:", 13, y); y+=5;
+  doc.setFont("helvetica","normal"); doc.setFontSize(8.5); doc.setTextColor(60,60,60);
+  const tncLines = document.getElementById('tnc').value.split('\n');
+  tncLines.forEach(t=>{ checkPage(8); doc.text(t, 16, y, {maxWidth:pw-28}); y+=6; });
+
+  // ---- Signature Block ----
+  checkPage(42);
+  y+=4;
+  doc.setFontSize(9); doc.setFont("helvetica","bold"); doc.setTextColor(0,0,0);
+  doc.text("AUTHORISATION", pw/2, y, {align:'center'}); y+=5;
+  doc.autoTable({
+    body:[
+      ['Prepared by', '', 'Accepted by (Client)', ''],
+      [`Name: ${meta.preparedBy||'________________'}`, '', 'Name: ________________________', ''],
+      [`Firm: ${meta.firmName||'________________'}`,   '', 'Company: _____________________', ''],
+      ['Signature: ___________________',               '', 'Signature: ___________________', ''],
+      ['Date: ________________________',               '', 'Date: ________________________', ''],
+    ],
+    startY:y,
+    styles:{font:'helvetica',fontSize:9,cellPadding:3},
+    columnStyles:{0:{cellWidth:80},1:{cellWidth:10},2:{cellWidth:80},3:{cellWidth:10}},
+    theme:'plain',
+    didParseCell:function(data){
+      if(data.row.index===0) { data.cell.styles.fontStyle='bold'; data.cell.styles.textColor=[70,70,70]; }
+    },
+    margin:{left:13,right:13}
+  });
+
+  // ---- Page numbers ----
+  const totalPages = doc.internal.getNumberOfPages();
+  for(let i=1;i<=totalPages;i++){
+    doc.setPage(i);
+    doc.setFontSize(8); doc.setTextColor(150);
+    doc.text(`${meta.quoteRef||'BOQ'}  |  Rev ${meta.revision||1}  |  Page ${i} of ${totalPages}`, pw/2, ph-7, {align:'center'});
+    doc.setFontSize(7); doc.setTextColor(180);
+    doc.text('Prepared using TerraCost · terracostgulf.vercel.app', pw/2, ph-3, {align:'center'});
+  }
+
+  // ---- Dynamic filename ----
+  const projSlug = (meta.project||'BOQ').replace(/[^a-zA-Z0-9]/g,'_').replace(/__+/g,'_').slice(0,30);
+  const revStr   = `Rev${meta.revision||1}`;
+  const dateStr  = new Date().toISOString().slice(0,10);
+  captureTelemety('pdf');
+  doc.save(`${projSlug}_${revStr}_${dateStr}.pdf`);
+  } catch(err) {
+    alert('PDF export error: ' + err.message);
+    console.error('PDF export failed:', err);
+  }
+}
+
+// ===================== EXCEL EXPORT =====================
+async function downloadExcel() {
+  if (needsLeadCapture()) { gateExport(downloadExcel, 'excel'); return; }
+  if (!isUnlocked()) {  return; }
+  try {
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'Zenyard BOQ Tool';
+  wb.created = new Date();
+  const ws = wb.addWorksheet('BOQ', { views: [{ state: 'frozen', ySplit: 1 }] });
+
+  ws.columns = [
+    { width: 9  }, // A: #
+    { width: 34 }, // B: Description
+    { width: 26 }, // C: Spec/Notes
+    { width: 8  }, // D: Unit
+    { width: 9  }, // E: Qty
+    { width: 14 }, // F: Rate
+    { width: 14 }, // G: Tax Code
+    { width: 16 }, // H: Total
+    { width: 7  }, // I: Tax?
+  ];
+
+  const meta = {
+    firmName:    document.getElementById('firmName').value,
+    preparedBy:  document.getElementById('preparedBy').value,
+    firmContact: document.getElementById('firmContact').value,
+    firmTRN:     document.getElementById('firmTRN')?.value||'',
+    firmCR:      document.getElementById('firmCR')?.value||'',
+    firmAddr:    document.getElementById('firmAddr')?.value||'',
+    quoteRef:    document.getElementById('quoteRef').value,
+    revision:    document.getElementById('revision').value||'1',
+    client:      document.getElementById('clientName').value,
+    clientAddr:  document.getElementById('clientAddr').value,
+    project:     document.getElementById('projectName').value,
+    siteAddr:    document.getElementById('siteAddr').value,
+    type:        document.getElementById('projectType').value,
+    start:       document.getElementById('startDate').value,
+    end:         document.getElementById('endDate').value,
+  };
+
+  // ---- Style helpers ----
+  const bg = (hex) => ({ type:'pattern', pattern:'solid', fgColor:{ argb:'FF'+hex } });
+  const ft = (hex, size=9, bold=false, italic=false) => ({ name:'Arial', size, bold, italic, color:{ argb:'FF'+hex } });
+  const al = (h='left', wrap=false) => ({ horizontal:h, vertical:'middle', wrapText:wrap });
+  const numFmt = '#,##0.00';
+  const thinBorder = { style:'thin', color:{ argb:'FFB7B3A3' } };
+  const allBorders = { top:thinBorder, bottom:thinBorder, left:thinBorder, right:thinBorder };
+  const btBorder = { top:thinBorder, bottom:thinBorder };
+
+  function styleRow(r, opts={}) {
+    r.eachCell({ includeEmpty:true }, (cell, col) => {
+      if (opts.bgHex) cell.fill = bg(opts.bgHex);
+      if (opts.fontHex) cell.font = ft(opts.fontHex, opts.size||9, opts.bold||false, opts.italic||false);
+      if (opts.borders === 'all') cell.border = allBorders;
+      if (opts.borders === 'tb')  cell.border = btBorder;
+      cell.alignment = al(opts.align||'left');
+    });
+  }
+
+  function mergedRow(text, bgHex, fontHex, bold=true, size=10) {
+    const r = ws.addRow([text]);
+    r.height = size === 14 ? 24 : 18;
+    const cell = r.getCell(1);
+    cell.value = text;
+    cell.fill = bg(bgHex);
+    cell.font = ft(fontHex, size, bold);
+    cell.alignment = al('left');
+    cell.border = allBorders;
+    ws.mergeCells(r.number, 1, r.number, 9);
+    return r;
+  }
+
+  function colHeaderRow() {
+    const r = ws.addRow(['#','Description','Spec / Notes','Unit','Qty',
+      `Rate (${currency.symbol})`,'Tax Code',`Total (${currency.symbol})`,'Tax?']);
+    r.height = 16;
+    r.eachCell(cell => {
+      cell.fill = bg('A89F87');
+      cell.font = ft('2A1A00', 9, true);
+      cell.alignment = al('center');
+      cell.border = allBorders;
+    });
+    return r;
+  }
+
+  // ---- Firm Header ----
+  mergedRow(meta.firmName||'Landscaping BOQ & Cost Estimator', '143C64', 'FFFFFF', true, 14);
+  const trnLine = [
+    meta.firmTRN ? 'TRN: '+meta.firmTRN : null,
+    meta.firmCR  ? 'Trade Licence: '+meta.firmCR : null,
+    meta.firmAddr||null,
+    meta.preparedBy||null,
+    meta.firmContact||null
+  ].filter(Boolean).join('   |   ');
+  const subHdr = ws.addRow([trnLine]);
+  subHdr.height = 13;
+  subHdr.getCell(1).fill = bg('7A6040');
+  subHdr.getCell(1).font = ft('FFFFFF', 8.5);
+  subHdr.getCell(1).alignment = al('center');
+  ws.mergeCells(subHdr.number, 1, subHdr.number, 9);
+
+  ws.addRow([]);
+
+  // ---- Project Info: two-column block ----
+  const infoRows = [
+    ['Quote Ref:',  meta.quoteRef||'-',    'Client:',   meta.client||'-'    ],
+    ['Revision:',   'Rev '+(meta.revision||1), 'Project:', meta.project||'-'],
+    ['Date Issued:', new Date().toLocaleDateString('en-GB'), 'Site:', meta.siteAddr||'-'],
+    ['Currency:',   `${currency.code} (${currency.symbol})`, 'Type:', meta.type||'-'],
+    ['Period:',     `${meta.start||'-'} to ${meta.end||'-'}`, 'Client Addr:', meta.clientAddr||'-'],
+  ];
+  infoRows.forEach(([lbl1,val1,lbl2,val2]) => {
+    const r = ws.addRow([lbl1, val1, '', '', '', lbl2, val2]);
+    r.height = 13;
+    r.getCell(1).font = ft('4A3010', 9, true);
+    r.getCell(2).font = ft('000000', 9);
+    r.getCell(6).font = ft('4A3010', 9, true);
+    r.getCell(7).font = ft('000000', 9);
+    r.getCell(1).alignment = al('right');
+    r.getCell(6).alignment = al('right');
+    ws.mergeCells(r.number, 2, r.number, 5);
+    ws.mergeCells(r.number, 7, r.number, 9);
+  });
+
+  ws.addRow([]);
+
+  // ---- Zones (Project-wide at index 0) ----
+  zones.forEach((zone, zi) => {
+    mergedRow(zi===0 ? 'PROJECT-WIDE' : `ZONE ${zi}: ${zone.name.toUpperCase()}`, zi===0?'1A3829':'5C4626', 'FFFFFF', true, 11);
+    let itemSerial = 0;
+    let zoneItemStart = ws.rowCount + 1;
+    let zoneTotal = 0;
+
+    zone.scopes.forEach((sc) => {
+      // Scope sub-header
+      const scR = ws.addRow(['', sc.name]);
+      scR.height = 15;
+      scR.eachCell(cell => {
+        cell.fill = bg('D3C0A5');
+        cell.font = ft('4A3010', 9, true);
+        cell.border = allBorders;
+      });
+      ws.mergeCells(scR.number, 2, scR.number, 9);
+
+      colHeaderRow();
+      let scopeItemStart = ws.rowCount + 1;
+      let scopeTotal = 0;
+
+      sc.items.forEach(itm => {
+        if (!itm.qty && !itm.desc && !itm.rate) return;
+        itemSerial++;
+        const serial = `${zi===0?'PW':zi}.${String(itemSerial).padStart(2,'0')}`;
+        const u = itm.unit==='other' ? (itm.unit_other||'') : itm.unit||'nos';
+        const itemTotal = (itm.qty||0)*(itm.rate||0);
+        scopeTotal += itemTotal;
+        zoneTotal  += itemTotal;
+
+        const r = ws.addRow([serial, itm.desc||'', itm.notes||'', u,
+          itm.qty||0, itm.rate||0, itm.hsn||'', null, itm.taxable?'Yes':'No']);
+        r.getCell(8).value = { formula: `=E${r.number}*F${r.number}` };
+        r.height = itm.notes ? 20 : 14;
+        const isAlt = (r.number%2===0);
+
+        r.eachCell((cell, col) => {
+          if (isAlt) cell.fill = bg('F6F1E9');
+          cell.font  = ft('333333', 9);
+          cell.border = allBorders;
+          if (col===5||col===6||col===8) { cell.alignment=al('right'); cell.numFmt=numFmt; }
+          if (col===1||col===9) cell.alignment = al('center');
+          if (col===3 && itm.notes) cell.font = ft('888888', 8, false, true);
+        });
+
+        // Sub-items — display only (H left blank to avoid double-count in SUM)
+        if (itm.details && itm.details.length) {
+          itm.details.forEach(sub => {
+            if (!sub.name && !sub.qty && !sub.rate) return;
+            const su = sub.unit==='other'?(sub.unit_other||''):sub.unit||'nos';
+            const sr = ws.addRow(['', `  ↳ ${sub.name}`, '', su, sub.qty||0, sub.rate||0, sub.hsn||'',
+              (sub.qty||0)*(sub.rate||0), '']);
+            sr.height = 13;
+            sr.eachCell((cell, col) => {
+              cell.fill = bg('FDFCF8');
+              cell.font = ft('555577', 8, false, true);
+              cell.border = btBorder;
+              if (col===5||col===6||col===8) { cell.alignment=al('right'); cell.numFmt=numFmt; }
+            });
+            // Mark sub-item H cells so zone/scope SUM skips them by making them display only (not formula)
+          });
+        }
+      });
+
+      // Scope subtotal
+      const stR = ws.addRow(['','','','','','', `${sc.name} subtotal`, scopeTotal, '']);
+      stR.height = 13;
+      stR.eachCell((cell, col) => {
+        cell.fill = bg('FAF7F0');
+        cell.font = ft('5A4020', 8.5, col===7||col===8);
+        cell.border = btBorder;
+        if (col===7) cell.alignment = al('right');
+        if (col===8) { cell.alignment=al('right'); cell.numFmt=numFmt; }
+      });
+      ws.mergeCells(stR.number, 1, stR.number, 6);
+    });
+
+    // Zone total
+    const ztR = ws.addRow([zi===0?'Project-wide Total':`Zone ${zi} Total`, '', '', '', '', '', '', zoneTotal, '']);
+    ztR.height = 18;
+    ztR.eachCell((cell, col) => {
+      cell.fill = bg('ECF5E8');
+      cell.font = ft('1A5A18', 10, true);
+      cell.border = allBorders;
+      if (col===8) { cell.alignment=al('right'); cell.numFmt=numFmt; }
+    });
+    ws.mergeCells(ztR.number, 1, ztR.number, 7);
+
+    ws.addRow([]);
+  });
+
+  // ---- Cost Summary ----
+  mergedRow('COST SUMMARY', '3D3515', 'FFFFFF', true, 11);
+
+  const {taxableSubtotal, nonTaxableSubtotal} = getTaxSplitTotals();
+
+  const tlEx       = currency.taxLabel||'VAT';
+  const worksSub   = taxableSubtotal + nonTaxableSubtotal;
+  const design     = +document.getElementById('designCharges').value||0;
+  const labour     = +document.getElementById('labourCharges').value||0;
+  const transport  = +document.getElementById('transportCharges').value||0;
+  const xlOverheadP  = +document.getElementById('overheadPercent')?.value||0;
+  const xlOverheadAmt = worksSub * xlOverheadP/100;
+  const taxP       = +document.getElementById('taxPercent').value||0;
+  const taxAmt     = taxableSubtotal * taxP/100;
+  const provP      = +document.getElementById('provisionalPercent').value||0;
+  const provAmt    = worksSub*provP/100;
+  const discP      = +document.getElementById('discountPercent').value||0;
+  const xlPreTax   = worksSub+design+labour+xlOverheadAmt+provAmt;
+  const grossBD    = xlPreTax+taxAmt;
+  const discAmt    = grossBD*discP/100;
+  const grand      = grossBD-discAmt;
+  const xlRetentionP   = +document.getElementById('retentionPercent')?.value||0;
+  const xlRetentionAmt = grand * xlRetentionP/100;
+  const { grandTotal:maintTot, freqSel:maintFreqSel, months:maintMths } = getMaintTotals();
+
+  const summaryLines = [
+    { label:'Subtotal — Taxable Works',    value:taxableSubtotal,    fontHex:'333333' },
+    { label:'Subtotal — Non-Taxable Works',value:nonTaxableSubtotal, fontHex:'333333' },
+    { label:'Design Charges',             value:design,             fontHex:'333333' },
+    { label:'Labour / Install Charges',   value:labour,             fontHex:'333333' },
+    { label:'Transport / Mobilisation',   value:transport,          fontHex:'333333' },
+    xlOverheadP>0 ? { label:`Contractor O&P @ ${xlOverheadP}%`, value:xlOverheadAmt, fontHex:'28509A' } : null,
+    provP>0       ? { label:`Provisional Sum @ ${provP}%`,       value:provAmt,       fontHex:'3A6A20' } : null,
+    taxAmt>0      ? { label:`${tlEx} @ ${taxP}%`,                value:taxAmt,        fontHex:'333333' } : null,
+    discP>0       ? { label:`Discount @ ${discP}%`,              value:-discAmt,      fontHex:'AA3020' } : null,
+    xlRetentionP>0 ? { label:`Retention @ ${xlRetentionP}% (held by client)`, value:-xlRetentionAmt, fontHex:'A86010' } : null,
+    xlRetentionP>0 ? { label:'Net Payable (after retention)', value:grand-xlRetentionAmt, fontHex:'1A6A10' } : null,
+  ].filter(Boolean);
+
+  summaryLines.forEach(({ label, value, fontHex }) => {
+    const r = ws.addRow(['', label, '', '', '', '', '', value, '']);
+    r.height = 14;
+    r.getCell(2).font = ft('4A3010', 9, true);
+    r.getCell(8).font = ft(fontHex, 9);
+    r.getCell(8).numFmt = numFmt;
+    r.getCell(8).alignment = al('right');
+    r.eachCell(cell => { cell.border = btBorder; });
+    ws.mergeCells(r.number, 2, r.number, 7);
+  });
+
+  // Grand Total
+  const gtR = ws.addRow(['', 'CONTRACT SUM (excl. Retention)', '', '', '', '', '', grand, '']);
+  gtR.height = 24;
+  gtR.eachCell(cell => {
+    cell.fill = bg('1A2080');
+    cell.font = ft('FFFFFF', 13, true);
+    cell.border = allBorders;
+  });
+  gtR.getCell(8).numFmt = numFmt;
+  gtR.getCell(8).alignment = al('right');
+  ws.mergeCells(gtR.number, 2, gtR.number, 7);
+
+  if (maintTot > 0) {
+    const mR = ws.addRow(['', 'AMC — ' + maintFreqSel + ' · ' + maintMths + ' months',
+      '', '', '', '', '', maintTot, '']);
+    mR.height = 14;
+    mR.eachCell((cell, col) => {
+      cell.fill = bg('E8F5E0');
+      cell.font = ft('2A7A1A', 9, true);
+      if (col===8) { cell.numFmt=numFmt; cell.alignment=al('right'); }
+    });
+    ws.mergeCells(mR.number, 2, mR.number, 3);
+  }
+
+  ws.addRow([]);
+
+  // ---- Terms & Conditions ----
+  mergedRow('Terms & Conditions', 'EDE3D1', '4A3010', true, 9);
+  document.getElementById('tnc').value.split('\n').forEach(line => {
+    if (!line.trim()) return;
+    const r = ws.addRow(['', line]);
+    r.height = 13;
+    r.getCell(2).font = ft('444444', 8.5);
+    r.getCell(2).alignment = al('left', true);
+    ws.mergeCells(r.number, 2, r.number, 9);
+  });
+
+
+  const VENDOR_TYPE = {
+    'Softscape — Trees':              'Plants (Nursery)',
+    'Softscape — Shrubs & Groundcovers': 'Plants (Nursery)',
+    'Turf & Lawn':                    'Plants (Nursery)',
+    'Interior Plantscaping':          'Plants / Materials',
+    'Green Walls':                    'Materials (Supplier)',
+    'Engineered Soil Media':          'Materials (Supplier)',
+    'Site Preparation':               'Labour (Subcontractor)',
+    'Irrigation System':              'Materials (Supplier)',
+    'Hardscape — Paving':             'Materials (Supplier)',
+    'Hardscape — Structures':         'Materials (Supplier)',
+    'Outdoor Lighting':               'Materials (Supplier)',
+    'Fencing & Gates':                'Materials (Supplier)',
+    'Water Features':                 'Materials (Supplier)',
+    'Drainage':                       'Materials (Supplier)',
+    'Site Furnishings':               'Materials (Supplier)',
+    'Preliminaries':                  'Labour (Subcontractor)',
+  };
+
+  // ---- Bill of Supply: Zone-wise (RFQ — no rates) ----
+  const wsML = wb.addWorksheet('Bill of Supply — Zone-wise');
+  wsML.columns = [
+    { width: 5  }, // #
+    { width: 20 }, // Zone
+    { width: 20 }, // Category
+    { width: 36 }, // Description
+    { width: 22 }, // Spec / Notes
+    { width: 10 }, // Unit
+    { width: 10 }, // Qty
+    { width: 18 }, // Vendor Type
+    { width: 22 }, // Unit Rate (blank for vendor)
+  ];
+
+  const mlH = wsML.addRow(['BILL OF SUPPLY — REQUEST FOR QUOTATION (ZONE-WISE)', '', '', '', '', '', '', '', '']);
+  mlH.height = 24;
+  mlH.getCell(1).fill = bg('14305A');
+  mlH.getCell(1).font = ft('FFFFFF', 13, true);
+  wsML.mergeCells(mlH.number, 1, mlH.number, 9);
+
+  const mlSub = wsML.addRow([`${meta.client||''} | ${meta.project||''} | ${meta.quoteRef||''} | Rev ${meta.revision||1}`]);
+  mlSub.getCell(1).font = ft('666666', 9);
+  wsML.mergeCells(mlSub.number, 1, mlSub.number, 9);
+
+  const mlNote = wsML.addRow(['Please fill in Unit Rate column and return. Rates are confidential and will not be shared with other vendors.']);
+  mlNote.getCell(1).font = ft('8A4010', 8.5, false, true);
+  wsML.mergeCells(mlNote.number, 1, mlNote.number, 9);
+  wsML.addRow([]);
+
+  let mlSerial = 0;
+
+  zones.forEach((zone, zi) => {
+    const zoneName = zi === 0 ? 'Project-wide' : `Zone ${zi}: ${zone.name}`;
+    const hasItems = zone.scopes.some(sc => sc.items.some(it => (it.qty||0) > 0));
+    if (!hasItems) return;
+
+    const zhdr = wsML.addRow([zoneName]);
+    zhdr.height = 18;
+    zhdr.getCell(1).fill = bg(zi === 0 ? 'A8711E' : '14305A');
+    zhdr.getCell(1).font = ft('FFFFFF', 10, true);
+    wsML.mergeCells(zhdr.number, 1, zhdr.number, 9);
+
+    const mch = wsML.addRow(['#', 'Zone', 'Category', 'Description / Species', 'Spec / Notes', 'Unit', 'Qty', 'Vendor Type', 'Unit Rate (Your Quote)']);
+    mch.height = 15;
+    mch.eachCell(cell => {
+      cell.fill = bg('E8EDF5'); cell.font = ft('14305A', 9, true);
+      cell.border = allBorders; cell.alignment = al('center');
+    });
+
+    zone.scopes.forEach(sc => {
+      const vendorType = VENDOR_TYPE[sc.name] || 'Materials (Supplier)';
+      sc.items.forEach(item => {
+        if (!(item.qty > 0)) return;
+        if (item.details && item.details.length > 0) {
+          item.details.forEach(sub => {
+            if (!(sub.qty > 0)) return;
+            mlSerial++;
+            const u = sub.unit === 'other' ? (sub.unit_other||'') : (sub.unit||'');
+            const r = wsML.addRow([mlSerial, zoneName, sc.name,
+              sub.name || item.desc,
+              item.desc !== (sub.name||item.desc) ? item.desc : '',
+              u, sub.qty, vendorType, '']);
+            r.height = 14;
+            r.eachCell((cell, col) => {
+              cell.font = ft('333333', 9); cell.border = btBorder;
+              if (col === 7) { cell.alignment = al('right'); cell.numFmt = '#,##0.00'; }
+              if (col === 8) { cell.font = ft('666666', 8.5); }
+              if (col === 9) {
+                cell.fill = bg('FFFDE7');
+                cell.border = allBorders;
+                cell.alignment = al('right');
+                cell.font = ft('8A4010', 9);
+              }
+            });
+          });
+        } else {
+          mlSerial++;
+          const u = item.unit === 'other' ? (item.unit_other||'') : (item.unit||'');
+          const r = wsML.addRow([mlSerial, zoneName, sc.name,
+            item.desc, item.notes||'', u, item.qty, vendorType, '']);
+          r.height = 14;
+          r.eachCell((cell, col) => {
+            cell.font = ft('333333', 9); cell.border = btBorder;
+            if (col === 7) { cell.alignment = al('right'); cell.numFmt = '#,##0.00'; }
+            if (col === 8) { cell.font = ft('666666', 8.5); }
+            if (col === 9) {
+              cell.fill = bg('FFFDE7');
+              cell.border = allBorders;
+              cell.alignment = al('right');
+              cell.font = ft('8A4010', 9);
+            }
+          });
+        }
+      });
+    });
+    wsML.addRow([]);
+  });
+
+  // ---- Bill of Supply: Consolidated (RFQ — no rates) ----
+  const wsCL = wb.addWorksheet('Bill of Supply — Consolidated');
+  wsCL.columns = [
+    { width: 5  }, // #
+    { width: 20 }, // Category
+    { width: 38 }, // Description
+    { width: 10 }, // Unit
+    { width: 12 }, // Total Qty
+    { width: 18 }, // Vendor Type
+    { width: 22 }, // Unit Rate (blank)
+    { width: 32 }, // Zones
+  ];
+
+  const clH = wsCL.addRow(['BILL OF SUPPLY — REQUEST FOR QUOTATION (CONSOLIDATED)', '', '', '', '', '', '', '']);
+  clH.height = 24;
+  clH.getCell(1).fill = bg('14305A');
+  clH.getCell(1).font = ft('FFFFFF', 13, true);
+  wsCL.mergeCells(clH.number, 1, clH.number, 8);
+
+  const clSub = wsCL.addRow([`${meta.client||''} | ${meta.project||''} | ${meta.quoteRef||''} | Rev ${meta.revision||1} | Consolidated across all zones`]);
+  clSub.getCell(1).font = ft('666666', 9);
+  wsCL.mergeCells(clSub.number, 1, clSub.number, 8);
+
+  const clNote = wsCL.addRow(['Please fill in Unit Rate column and return. This document does not contain pricing information.']);
+  clNote.getCell(1).font = ft('8A4010', 8.5, false, true);
+  wsCL.mergeCells(clNote.number, 1, clNote.number, 8);
+  wsCL.addRow([]);
+
+  // Aggregate by scope + desc + unit (no rate in key)
+  const matMap = new Map();
+  zones.forEach((zone, zi) => {
+    const zoneName = zi === 0 ? 'Project-wide' : ('Zone ' + zi + ': ' + zone.name);
+    zone.scopes.forEach(sc => {
+      const vendorType = VENDOR_TYPE[sc.name] || 'Materials (Supplier)';
+      sc.items.forEach(item => {
+        if (!(item.qty > 0)) return;
+        const addEntry = (desc, unit, qty) => {
+          const key = sc.name + '||' + desc + '||' + unit;
+          if (!matMap.has(key)) {
+            matMap.set(key, { scope:sc.name, desc, unit, qty:0, vendorType, zones:new Set() });
+          }
+          const e = matMap.get(key);
+          e.qty += qty;
+          e.zones.add(zoneName);
+        };
+        if (item.details && item.details.length > 0) {
+          item.details.forEach(sub => {
+            if (!(sub.qty > 0)) return;
+            const u = sub.unit === 'other' ? (sub.unit_other||'') : (sub.unit||'');
+            addEntry(sub.name || item.desc, u, sub.qty);
+          });
+        } else {
+          const u = item.unit === 'other' ? (item.unit_other||'') : (item.unit||'');
+          addEntry(item.desc, u, item.qty);
+        }
+      });
+    });
+  });
+
+  const byScope = new Map();
+  matMap.forEach(e => {
+    if (!byScope.has(e.scope)) byScope.set(e.scope, []);
+    byScope.get(e.scope).push(e);
+  });
+
+  const clCH = wsCL.addRow(['#', 'Category', 'Description', 'Unit', 'Total Qty', 'Vendor Type', 'Unit Rate (Your Quote)', 'Present in Zones']);
+  clCH.height = 16;
+  clCH.eachCell(cell => {
+    cell.fill = bg('14305A'); cell.font = ft('FFFFFF', 9, true);
+    cell.border = allBorders; cell.alignment = al('center');
+  });
+
+  let clSerial = 0;
+  byScope.forEach((items, scopeName) => {
+    const sh = wsCL.addRow(['', scopeName]);
+    sh.height = 15;
+    sh.getCell(2).fill = bg('E8EDF5');
+    sh.getCell(2).font = ft('14305A', 9, true);
+    sh.eachCell(cell => { cell.border = btBorder; });
+    wsCL.mergeCells(sh.number, 2, sh.number, 8);
+
+    items.forEach(e => {
+      clSerial++;
+      const r = wsCL.addRow([clSerial, '', e.desc, e.unit, e.qty, e.vendorType, '', [...e.zones].join(', ')]);
+      r.height = 14;
+      r.eachCell((cell, col) => {
+        cell.font = ft('333333', 9); cell.border = btBorder;
+        if (col === 5) { cell.alignment = al('right'); cell.numFmt = '#,##0.00'; }
+        if (col === 6) { cell.font = ft('666666', 8.5); }
+        if (col === 7) {
+          cell.fill = bg('FFFDE7');
+          cell.border = allBorders;
+          cell.alignment = al('right');
+          cell.font = ft('8A4010', 9);
+        }
+        if (col === 8) { cell.font = ft('888888', 8); }
+      });
+    });
+
+    const tr = wsCL.addRow(['', scopeName + ' — ' + items.length + ' item type' + (items.length>1?'s':''), '', '', '', '', '', '']);
+    tr.height = 13;
+    tr.eachCell((cell, col) => {
+      cell.fill = bg('F5F2EC');
+      cell.font = ft('14305A', 8.5, col===2);
+      cell.border = btBorder;
+    });
+    wsCL.mergeCells(tr.number, 2, tr.number, 8);
+    wsCL.addRow([]);
+  });
+
+  const matGtR = wsCL.addRow(['', 'TOTAL — ' + clSerial + ' LINE ITEMS ACROSS ALL ZONES', '', '', '', '', '', '']);
+  matGtR.height = 20;
+  matGtR.eachCell((cell, col) => {
+    cell.fill = bg('14305A'); cell.font = ft('FFFFFF', 10, true);
+    cell.border = allBorders;
+  });
+  wsCL.mergeCells(matGtR.number, 2, matGtR.number, 8);
+
+    // ---- Download ----
+  const buffer = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const slug = (meta.project||'BOQ').replace(/[^a-zA-Z0-9]/g,'_').replace(/__+/g,'_').slice(0,30);
+  a.href = url;
+  a.download = `${slug}_Rev${meta.revision||1}_${new Date().toISOString().slice(0,10)}.xlsx`;
+  captureTelemety('excel');
+  a.click();
+  URL.revokeObjectURL(url);
+  } catch(err) {
+    alert('Excel export error: ' + err.message);
+    console.error('Excel export failed:', err);
+  }
+}
+
+
+// ===================== ACCORDION =====================
+const ACC_SECTIONS = ['firm','project','scope','charges','maint','tnc'];
+
+function toggleSection(id) {
+  const el = document.getElementById('acc-'+id);
+  if (!el) return;
+  el.classList.toggle('open');
+  saveAccordionState();
+}
+
+function openSection(id) {
+  const el = document.getElementById('acc-'+id);
+  if (el) el.classList.add('open');
+}
+
+function saveAccordionState() {
+  const state = {};
+  ACC_SECTIONS.forEach(id => {
+    state[id] = document.getElementById('acc-'+id)?.classList.contains('open') || false;
+  });
+  try { localStorage.setItem('boq_gulf_acc', JSON.stringify(state)); } catch(e) {}
+}
+
+function initAccordion() {
+  try {
+    const raw = localStorage.getItem('boq_gulf_acc');
+    if (raw) {
+      const state = JSON.parse(raw);
+      ACC_SECTIONS.forEach(id => {
+        const el = document.getElementById('acc-'+id);
+        if (!el) return;
+        if (state[id]) el.classList.add('open');
+        else el.classList.remove('open');
+      });
+    } else {
+      // Fresh user: only firm section open
+      openSection('firm');
+    }
+  } catch(e) { openSection('firm'); }
+}
+
+function updateAccordionHints() {
+  // Firm hint
+  const firm = document.getElementById('firmName')?.value;
+  const firmEl = document.getElementById('acc-hint-firm');
+  if (firmEl) firmEl.textContent = firm || '';
+
+  // Project hint
+  const client  = document.getElementById('clientName')?.value;
+  const project = document.getElementById('projectName')?.value;
+  const projEl  = document.getElementById('acc-hint-project');
+  if (projEl) {
+    const parts = [client, project].filter(Boolean);
+    projEl.textContent = parts.length ? parts.join(' — ') : '';
+  }
+
+  // Scope hint
+  const scopeEl = document.getElementById('acc-hint-scope');
+  if (scopeEl) {
+    const zoneCount  = zones.length - 1; // exclude project-wide
+    const scopeCount = zones.reduce((t,z)=>t+z.scopes.length,0);
+    const itemCount  = zones.reduce((t,z)=>t+z.scopes.reduce((s,sc)=>s+sc.items.filter(i=>i.qty>0||i.rate>0).length,0),0);
+    const parts = [];
+    if (zoneCount > 0) parts.push(`${zoneCount} zone${zoneCount>1?'s':''}`);
+    if (scopeCount > 0) parts.push(`${scopeCount} scope${scopeCount>1?'s':''}`);
+    if (itemCount > 0) parts.push(`${itemCount} line item${itemCount>1?'s':''}`);
+    scopeEl.textContent = parts.join(', ');
+  }
+
+  // Charges hint — show grand total if non-zero
+  const chargesEl = document.getElementById('acc-hint-charges');
+  if (chargesEl) {
+    const totalsEl = document.getElementById('totalsBlock');
+    const grandEl  = totalsEl?.querySelector('.grandrow .tval');
+    chargesEl.textContent = grandEl?.textContent ? 'Grand Total ' + grandEl.textContent : '';
+  }
+
+  // Maint hint
+  const maintHintEl = document.getElementById('acc-hint-maint');
+  if (maintHintEl) {
+    const { grandTotal:amcG, months:amcM, freqSel:amcF } = getMaintTotals();
+    maintHintEl.textContent = amcG > 0
+      ? amcF + ' · ' + amcM + ' mo. · ' + currency.symbol + ' ' + fmt(amcG)
+      : 'Optional';
+  }
+
+  // T&C hint
+  const tncEl = document.getElementById('acc-hint-tnc');
+  if (tncEl) {
+    const lines = (document.getElementById('tnc')?.value||'').split('\n').filter(l=>l.trim()).length;
+    tncEl.textContent = lines ? `${lines} clause${lines>1?'s':''}` : '';
+  }
+}
+
+// ===================== DISCOUNT FIELD TOGGLE =====================
+function toggleDiscountField() {
+  const row = document.getElementById('discountRow');
+  const restoreBtn = document.getElementById('discountRestoreBtn');
+  const isHidden = row.style.display === 'none';
+  if (isHidden) {
+    row.style.display = 'block';
+    restoreBtn.style.display = 'none';
+  } else {
+    // Reset value to 0 before hiding so it doesn't affect totals
+    document.getElementById('discountPercent').value = 0;
+    updateTotals();
+    row.style.display = 'none';
+    restoreBtn.style.display = 'inline-block';
+  }
+  scheduleSave();
+}
+
+// ===================== TRIAL & UNLOCK SYSTEM =====================
+// These codes are distributed manually after payment confirmation.
+// Each code works once per browser. Update this list as you scale.
+
+const UNLOCK_CODE = 'TCGULF24'; // Change before distribution
+
+function isUnlocked() { return true; }
+
+// ===================== AMC =====================
+const FREQ_VISITS = { Weekly:52, Fortnightly:26, Monthly:12, Quarterly:4 };
+
+const DEFAULT_AMC_ITEMS = [
+  { service:'General Horticulture (mowing, trimming, edging)',   freq:'Weekly',      rate:0 },
+  { service:'Fertilisation (slow-release granular application)', freq:'Quarterly',   rate:0 },
+  { service:'Pest & Disease Control (spray treatment)',          freq:'Monthly',     rate:0 },
+  { service:'Irrigation System Check & Adjustment',             freq:'Fortnightly', rate:0 },
+  { service:'Irrigation Filter Cleaning & Maintenance',         freq:'Monthly',     rate:0 },
+  { service:'Mulching / Top-dressing (seasonal)',               freq:'Quarterly',   rate:0 },
+  { service:'Summer Heat Stress Treatment (Apr–Oct)',           freq:'Monthly',     rate:0 },
+  { service:'Plant Replacement (up to 5% of initial supply)',   freq:'Quarterly',   rate:0 },
+  { service:'Hardscape Cleaning (washing, sweeping)',           freq:'Fortnightly', rate:0 },
+  { service:'Emergency Call-Out (outside scheduled visits)',    freq:'Monthly',     rate:0 }
+];
+
+let maintItems = [];
+
+function loadDefaultAMC() {
+  if (maintItems.length > 0 && !confirm('Replace current AMC items with the standard Gulf AMC template?')) return;
+  maintItems = DEFAULT_AMC_ITEMS.map(x => ({ ...x, persons:0, hours:0, inclusions:[], expanded:false }));
+  renderMaintItems();
+  updateMaint();
+}
+
+function addMaintItem() {
+  maintItems.push({ service:'', freq:'Monthly', rate:0, persons:0, hours:0, inclusions:[], expanded:false });
+  renderMaintItems();
+  updateMaint();
+}
+
+function toggleMaintExpandGulf(i) {
+  maintItems[i].expanded = !maintItems[i].expanded;
+  renderMaintItems();
+}
+
+function toggleMaintInclusionGulf(i, label) {
+  const item = maintItems[i];
+  if (!item) return;
+  const idx = item.inclusions.indexOf(label);
+  if (idx > -1) item.inclusions.splice(idx, 1);
+  else item.inclusions.push(label);
+  // Re-render detail section only
+  const det = document.getElementById('maint-detail-gulf-' + i);
+  if (det) det.innerHTML = renderMaintDetailGulf(i);
+  updateMaint();
+}
+
+const GULF_MAINT_CHECKLIST = [
+  'General Horticulture (mowing & edging)','Shrub Trimming & Shaping','Weeding',
+  'Watering & Irrigation Check','Site Sweeping & Cleaning',
+  'Fertilizer Application','Pest & Disease Spraying',
+  'Mulching & Top-dressing','Dead-heading & Light Pruning',
+  'Tree Pruning','Hardscape Cleaning','Plant Replacement',
+  'Irrigation Filter Service','Heat Stress Treatment','Emergency Response',
+];
+
+function renderMaintDetailGulf(i) {
+  const item   = maintItems[i];
+  if (!item) return '';
+  const checked = item.inclusions || [];
+  const boxes = GULF_MAINT_CHECKLIST.map(lbl => {
+    const isChk = checked.includes(lbl);
+    const safe  = lbl.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return `<label style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:#333;cursor:pointer;margin:3px 8px 3px 0;white-space:nowrap;"><input type="checkbox"${isChk?' checked':''} onchange="toggleMaintInclusionGulf(${i},'${safe}')">${lbl}</label>`;
+  }).join('');
+  const txt = getMaintInclusionTextGulf(item);
+  return `<div style="padding:10px 8px 6px;background:#F7F5F0;border-top:1px solid #E8E2D8;">
+    <div style="display:flex;gap:16px;margin-bottom:8px;flex-wrap:wrap;">
+      <label style="font-size:12px;color:#4A3010;font-weight:600;display:flex;align-items:center;gap:6px;">Persons:
+        <input type="number" min="0" max="20" value="${item.persons||0}" oninput="maintItems[${i}].persons=+this.value;updateMaint()" style="width:55px;padding:3px 6px;font-size:12px;border:1px solid #D4CEC5;border-radius:4px;"></label>
+      <label style="font-size:12px;color:#4A3010;font-weight:600;display:flex;align-items:center;gap:6px;">Hrs/Visit:
+        <input type="number" min="0" max="12" step="0.5" value="${item.hours||0}" oninput="maintItems[${i}].hours=+this.value;updateMaint()" style="width:60px;padding:3px 6px;font-size:12px;border:1px solid #D4CEC5;border-radius:4px;"></label>
+    </div>
+    <div style="font-size:11px;color:#4A3010;font-weight:600;margin-bottom:5px;">Inclusions:</div>
+    <div style="display:flex;flex-wrap:wrap;gap:2px;">${boxes}</div>
+    ${txt ? `<div style="margin-top:8px;padding:6px 8px;background:#fff;border-radius:4px;border:1px solid #E8E2D8;font-size:11.5px;color:#555;white-space:pre-line;">${txt}</div>` : ''}
+  </div>`;
+}
+
+function getMaintInclusionTextGulf(item) {
+  const parts = [];
+  if ((item.persons||0) > 0) parts.push((item.persons) + ' person' + ((item.persons)>1?'s':''));
+  if ((item.hours||0)   > 0) parts.push((item.hours) + ' hrs/visit');
+  const meta = parts.join(' · ');
+  const inc  = (item.inclusions||[]).join(', ');
+  if (meta && inc) return meta + '\nIncludes: ' + inc;
+  if (meta) return meta;
+  if (inc)  return 'Includes: ' + inc;
+  return '';
+}
+
+function removeMaintItem(i) {
+  maintItems.splice(i, 1);
+  renderMaintItems();
+  updateMaint();
+}
+
+function updateMaintItemField(i, field, value) {
+  if (field === 'rate') {
+    maintItems[i][field] = parseFloat(value)||0;
+  } else {
+    maintItems[i][field] = value;
+  }
+  updateMaint();
+}
+
+function getMaintTotals() {
+  const months     = +(document.getElementById('maintMonths')   ||{value:12}).value || 12;
+  const freqSel    = (document.getElementById('maintFrequency') ||{value:'Monthly'}).value || 'Monthly';
+  const perVisit   = +(document.getElementById('maintPerVisit') ||{value:0}).value  || 0;
+  const totalVisits = Math.round((FREQ_VISITS[freqSel]||12) * months / 12);
+  const visitTotal  = perVisit * totalVisits;
+  const servicesTotal = maintItems.reduce((sum, item) => {
+    const v = Math.round((FREQ_VISITS[item.freq]||12) * months / 12);
+    return sum + (item.rate||0) * v;
+  }, 0);
+  return { months, freqSel, totalVisits, visitTotal, servicesTotal, grandTotal: servicesTotal + visitTotal };
+}
+
+function renderMaintItems() {
+  var tbody = document.getElementById('maintItemsBody');
+  if (!tbody) return;
+  var months   = +(document.getElementById('maintMonths')||{value:12}).value || 12;
+  var freqOpts = ['Weekly','Fortnightly','Monthly','Quarterly'];
+  var rows = [];
+  for (var i = 0; i < maintItems.length; i++) {
+    var item   = maintItems[i];
+    var visits = Math.round((FREQ_VISITS[item.freq]||12) * months / 12);
+    var total  = (item.rate||0) * visits;
+    var svcVal = (item.service||'').replace(/"/g,'&quot;');
+    var opts   = '';
+    for (var j = 0; j < freqOpts.length; j++) {
+      var f = freqOpts[j];
+      opts += '<option value="' + f + '"' + (f===item.freq?' selected':'') + '>' + f + '</option>';
+    }
+    var idx2 = i;
+    var hasDetail = (item.persons||0) > 0 || (item.hours||0) > 0 || (item.inclusions||[]).length > 0;
+    var expIcon   = item.expanded ? '▲' : '▼';
+    var expStyle  = hasDetail && !item.expanded ? 'color:#A8711E;font-weight:700' : 'color:#888';
+    rows.push(
+      '<tr>' +
+      '<td class="serial">' + (i+1) + '</td>' +
+      '<td><input type="text" value="' + svcVal + '"' +
+        ' onchange="maintItems[' + idx2 + '].service=this.value;updateMaint()"' +
+        ' placeholder="Service description" style="min-width:160px"/></td>' +
+      '<td><select style="width:100%;margin:0;padding:4px 5px;font-size:12px"' +
+        ' onchange="maintItems[' + idx2 + '].freq=this.value;updateMaint()">' +
+        opts +
+      '</select></td>' +
+      '<td><input type="number" min="0" value="' + (item.rate||0) + '" style="width:92px"' +
+        ' oninput="maintItems[' + idx2 + '].rate=parseFloat(this.value)||0;updateMaint()"/></td>' +
+      '<td style="text-align:center;font-size:12px;color:#7E786F">' + visits + '</td>' +
+      '<td class="item-total">' + currency.symbol + ' ' + fmt(total) + '</td>' +
+      '<td style="white-space:nowrap">' +
+        '<button style="background:none;border:none;cursor:pointer;font-size:12px;padding:2px 4px;' + expStyle + '" onclick="toggleMaintExpandGulf(' + idx2 + ')">' + expIcon + '</button>' +
+        '<button class="del-btn" onclick="removeMaintItem(' + idx2 + ')">&times;</button>' +
+      '</td>' +
+      '</tr>' +
+      (item.expanded ? '<tr><td colspan="7" style="padding:0;" id="maint-detail-gulf-' + idx2 + '">' + renderMaintDetailGulf(idx2) + '</td></tr>' : '')
+    );
+  }
+  tbody.innerHTML = rows.join('');
+}
+function updateMaint() {
+  const { months, freqSel, totalVisits, visitTotal, servicesTotal, grandTotal } = getMaintTotals();
+  const s = currency.symbol + ' ';
+  const el = id => document.getElementById(id);
+  if (el('amcFreqDisp'))       el('amcFreqDisp').textContent       = freqSel;
+  if (el('amcDurDisp'))        el('amcDurDisp').textContent        = months;
+  if (el('amcVisitsDisp'))     el('amcVisitsDisp').textContent     = totalVisits;
+  if (el('amcServicesTotal'))  el('amcServicesTotal').textContent  = s + fmt(servicesTotal);
+  if (el('amcVisitTotal'))     el('amcVisitTotal').textContent     = s + fmt(visitTotal);
+  if (el('maintTotal'))        el('maintTotal').textContent        = s + fmt(grandTotal);
+  renderMaintItems();
+  scheduleSave();
+  updateAccordionHints();
+  updateStickyBar();
+}
+
+// ===================== END AMC =====================
+
+
+
+// ===================== SPLASH =====================
+function dismissSplash() {
+  const el = document.getElementById('splashOverlay');
+  if (!el) return;
+  el.classList.add('hiding');
+  setTimeout(() => { el.style.display = 'none'; }, 420);
+  try { localStorage.setItem('boq_gulf_seen', '1'); } catch(e) {}
+}
+
+function initSplash() {
+  const seen = localStorage.getItem('boq_gulf_seen');
+  const el   = document.getElementById('splashOverlay');
+  if (!el) return;
+  if (seen) {
+    el.style.display = 'none'; // returning user — skip splash
+  } else {
+    setTimeout(dismissSplash, 700); // first-time user — brief brand flourish, then in
+  }
+}
+
+
+// ===================== LEAD CAPTURE =====================
+let _pendingExport = null;
+let _pendingExportType = 'pdf';
+
+function needsLeadCapture() {
+  try { return !localStorage.getItem('boq_gulf_lead'); } catch(e) { return true; }
+}
+
+function gateExport(fn, type) {
+  _pendingExportType = type || 'pdf';
+  if (!needsLeadCapture()) { fn(); return; }
+  _pendingExport = fn;
+  const el = document.getElementById('leadOverlay');
+  if (el) el.style.display = 'flex';
+  setTimeout(() => document.getElementById('leadName')?.focus(), 100);
+}
+
+async function submitLead() {
+  const name    = (document.getElementById('leadName')?.value||'').trim();
+  const email   = (document.getElementById('leadEmail')?.value||'').trim();
+  const wa      = (document.getElementById('leadWhatsapp')?.value||'').trim();
+  const company = (document.getElementById('leadCompany')?.value||'').trim();
+  const errEl   = document.getElementById('leadError');
+
+  if (!name)                    { errEl.textContent = 'Please enter your name.'; return; }
+  if (!email||!email.includes('@')) { errEl.textContent = 'Please enter a valid email.'; return; }
+  errEl.textContent = '';
+
+  // Mark as captured — never ask again
+  try { localStorage.setItem('boq_gulf_lead', '1'); } catch(e) {}
+
+  // Close modal
+  const ov = document.getElementById('leadOverlay');
+  if (ov) ov.style.display = 'none';
+
+  // Run pending export immediately
+  if (_pendingExport) { const fn = _pendingExport; _pendingExport = null; fn(); }
+
+  // Extract project context
+  const species   = [];
+  const cats      = new Set();
+  let   itemCount = 0;
+  zones.forEach(zone => {
+    zone.scopes.forEach(sc => {
+      const isPlant = _PLANT_SCOPES.includes(sc.name);
+      sc.items.forEach(item => {
+        if (!(item.qty > 0)) return;
+        itemCount++; cats.add(sc.name);
+        if (item.details && item.details.length > 0) {
+          item.details.forEach(sub => { if (sub.name && isPlant) species.push(sub.name); });
+        } else if (isPlant) { species.push(item.desc); }
+      });
+    });
+  });
+  const {taxableSubtotal, nonTaxableSubtotal, gstTotal} = getTaxSplitTotals();
+  const works  = taxableSubtotal + nonTaxableSubtotal;
+  const taxP   = +document.getElementById('taxPercent')?.value||0;
+  const taxAmt = gstTotal || (taxableSubtotal * taxP / 100);
+  const design = +document.getElementById('designCharges')?.value||0;
+  const labour = +document.getElementById('labourCharges')?.value||0;
+  const trans  = +document.getElementById('transportCharges')?.value||0;
+  const provP  = +document.getElementById('provisionalPercent')?.value||0;
+  const discP  = +document.getElementById('discountPercent')?.value||0;
+  const gross  = works + design + labour + trans + (works * provP/100) + taxAmt;
+  const grand  = Math.round((gross - (gross * discP/100)) * 1000) / 1000;
+  const exportType = _pendingExportType || 'pdf';
+
+  // Send email via Formsubmit
+  try {
+    const fd = new FormData();
+    fd.append('name',     name);
+    fd.append('email',    email);
+    fd.append('_subject', 'TerraCost Lead — ' + (company||name) + ' — ' + (_COUNTRY_MAP[currency.code]||currency.code));
+    if (wa)      fd.append('whatsapp',  wa);
+    if (company) fd.append('company',   company);
+    fd.append('country',      _COUNTRY_MAP[currency.code]||currency.code);
+    fd.append('currency',     currency.code);
+    fd.append('project_type', document.getElementById('projectType')?.value||'');
+    fd.append('project_value', grand);
+    fd.append('categories',   [...cats].join(', '));
+    fd.append('species',      [...new Set(species)].slice(0,20).join(', '));
+    fd.append('export_type',  exportType);
+    fd.append('_captcha',     'false');
+    fd.append('_template',    'table');
+    fd.append('_replyto',     email);
+    fetch('https://formsubmit.co/urbangardenerblr@gmail.com', { method:'POST', body:fd });
+  } catch(e) {}
+
+  // Save to Supabase leads table with full context
+  try {
+    fetch(`${_SB_URL}/rest/v1/leads`, {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'apikey':        _SB_KEY,
+        'Authorization': `Bearer ${_SB_KEY}`,
+        'Prefer':        'return=minimal'
+      },
+      body: JSON.stringify({
+        name, email,
+        whatsapp:       wa       || null,
+        company:        company  || null,
+        country:        _COUNTRY_MAP[currency.code] || currency.code,
+        currency:       currency.code,
+        project_type:   document.getElementById('projectType')?.value || null,
+        project_value:  grand || null,
+        categories:     [...cats],
+        line_item_count: itemCount,
+        species:        [...new Set(species)].slice(0, 50),
+        export_type:    exportType,
+        tool_version:   'gulf-1.0'
+      })
+    });
+  } catch(e) {}
+}
+
+// ===================== TELEMETRY =====================
+const _SB_URL = 'https://czikjlhkprouewnspxey.supabase.co';
+const _SB_KEY = 'sb_publishable_yqsIQLdpW82W833zpJ3YAw_z-YJ_f3_';
+
+const _COUNTRY_MAP = {
+  AED:'UAE', SAR:'KSA', QAR:'Qatar', KWD:'Kuwait', OMR:'Oman', BHD:'Bahrain',
+  USD:'USA', GBP:'UK', EUR:'Europe', AUD:'Australia', SGD:'Singapore',
+  INR:'India', ZAR:'South Africa', MYR:'Malaysia', THB:'Thailand',
+  CNY:'China', JPY:'Japan', CAD:'Canada', NZD:'New Zealand', CHF:'Switzerland'
+};
+
+const _PLANT_SCOPES = [
+  'Softscape — Trees','Softscape — Shrubs & Groundcovers',
+  'Turf & Lawn','Interior Plantscaping','Green Walls'
+];
+
+async function captureTelemety(exportType) {
+  try {
+    const species   = [];
+    const materials = [];
+    const cats      = new Set();
+    let   itemCount = 0;
+
+    zones.forEach(zone => {
+      zone.scopes.forEach(sc => {
+        const isPlant = _PLANT_SCOPES.includes(sc.name);
+        sc.items.forEach(item => {
+          if (!(item.qty > 0)) return;
+          itemCount++;
+          cats.add(sc.name);
+          if (item.details && item.details.length > 0) {
+            item.details.forEach(sub => {
+              if (sub.name) (isPlant ? species : materials).push(sub.name);
+            });
+          } else {
+            (isPlant ? species : materials).push(item.desc);
+          }
+        });
+      });
+    });
+
+    // Grand total
+    const {taxableSubtotal, nonTaxableSubtotal, gstTotal} = getTaxSplitTotals();
+    const works  = taxableSubtotal + nonTaxableSubtotal;
+    const taxP   = +document.getElementById('taxPercent')?.value||0;
+    const taxAmt = gstTotal || (taxableSubtotal * taxP / 100);
+    const design = +document.getElementById('designCharges')?.value||0;
+    const labour = +document.getElementById('labourCharges')?.value||0;
+    const trans  = +document.getElementById('transportCharges')?.value||0;
+    const provP  = +document.getElementById('provisionalPercent')?.value||0;
+    const discP  = +document.getElementById('discountPercent')?.value||0;
+    const gross  = works + design + labour + trans + (works * provP/100) + taxAmt;
+    const grand  = gross - (gross * discP/100);
+
+    // AMC
+    const { grandTotal:amcVal, freqSel:amcFreq } = getMaintTotals ? getMaintTotals() : { grandTotal:0, freqSel:'' };
+
+    await fetch(`${_SB_URL}/rest/v1/boq_telemetry`, {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'apikey':        _SB_KEY,
+        'Authorization': `Bearer ${_SB_KEY}`,
+        'Prefer':        'return=minimal'
+      },
+      body: JSON.stringify({
+        country:         _COUNTRY_MAP[currency.code] || currency.code,
+        currency_code:   currency.code,
+        project_type:    document.getElementById('projectType')?.value || '',
+        project_value:   Math.round(grand * 1000) / 1000,
+        revision_count:  +document.getElementById('revision')?.value||1,
+        categories:      [...cats],
+        line_item_count: itemCount,
+        species:         [...new Set(species)].slice(0, 50),
+        materials:       [...new Set(materials)].slice(0, 50),
+        pdf_exported:    exportType === 'pdf',
+        excel_exported:  exportType === 'excel',
+        amc_frequency:   amcFreq || null,
+        amc_value:       amcVal  || null,
+        tool_version:    'gulf-1.0'
+      })
+    });
+  } catch(e) {
+    // Silent fail — telemetry never interrupts the tool
+  }
+}
+
+
+// ===================== SCOPE PICKER =====================
+let _pickerZoneIdx = null;
+let _pickerSelected = new Set();
+
+function openScopePicker(zi) {
+  _pickerZoneIdx = zi;
+  _pickerSelected = new Set();
+  const zone = zones[zi];
+  const isPW = zi === 0;
+  const zoneName = isPW ? 'Project-wide' : (zone.name || 'Zone ' + zi);
+  const added = new Set(zone.scopes.map(sc => sc.name));
+  document.getElementById('scopePickerTitle').textContent = 'Add Scopes — ' + zoneName;
+  const list = document.getElementById('scopePickerList');
+  list.innerHTML = SCOPE_ORDER.filter(k => SCOPE_DATA[k]).map(k => {
+    const isAdded = added.has(k);
+    return `<div class="scope-picker-item${isAdded ? ' already-added' : ''}" onclick="togglePickerScope('${k.replace(/'/g,"\'")}',this)">
+      <input type="checkbox" id="spck_${k.replace(/[^a-z]/gi,'_')}"
+        ${isAdded ? 'disabled checked' : ''}
+        onclick="event.stopPropagation();togglePickerScope('${k.replace(/'/g,"\'")}',this.closest('.scope-picker-item'))">
+      <label for="spck_${k.replace(/[^a-z]/gi,'_')}">${k}</label>
+      ${isAdded ? '<span class="already-tag">✓ Added</span>' : ''}
+    </div>`;
+  }).join('');
+  updatePickerBtn();
+  document.getElementById('scopePickerOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function togglePickerScope(name, el) {
+  const item = el.classList.contains('scope-picker-item') ? el : el.closest('.scope-picker-item');
+  if (!item || item.classList.contains('already-added')) return;
+  const cb = item.querySelector('input[type="checkbox"]');
+  if (_pickerSelected.has(name)) {
+    _pickerSelected.delete(name);
+    item.style.background = '';
+    if (cb) cb.checked = false;
+  } else {
+    _pickerSelected.add(name);
+    item.style.background = '#EAF2EC';
+    if (cb) cb.checked = true;
+  }
+  updatePickerBtn();
+}
+
+function updatePickerBtn() {
+  const btn = document.getElementById('scopePickerAddBtn');
+  const n = _pickerSelected.size;
+  btn.textContent = n > 0 ? `Add ${n} Scope${n > 1 ? 's' : ''}` : 'Add Selected';
+  btn.style.opacity = n > 0 ? '1' : '0.5';
+}
+
+function confirmScopePicker() {
+  if (_pickerSelected.size === 0) return;
+  _pickerSelected.forEach(name => {
+    if (!zones[_pickerZoneIdx].scopes.some(sc => sc.name === name)) {
+      const template = SCOPE_DATA[name] || [];
+      zones[_pickerZoneIdx].scopes.push({
+        name,
+        items: template.map(x => {
+          const memRate = getRateMem(currency.code, x.desc);
+          const rate = memRate !== null && memRate > 0 ? memRate : (x.rate || 0);
+          return {
+            desc: x.desc, unit: x.unit || 'nos', qty: 0, rate,
+            notes: '', details: [], hsn: '', unit_other: '',
+            taxable: x.taxable || false
+          };
+        })
+      });
+    }
+  });
+  closeScopePicker();
+  renderZones();
+  updateTotals();
+  scheduleSave();
+}
+
+function closeScopePicker() {
+  document.getElementById('scopePickerOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+  _pickerZoneIdx = null;
+  _pickerSelected = new Set();
+}
+
+// ===================== STICKY BAR =====================
+function updateStickyBar() {
+  const el = document.getElementById('stickyTotals');
+  if (!el) return;
+  const { taxableSubtotal, nonTaxableSubtotal } = getTaxSplitTotals ? getTaxSplitTotals() : { taxableSubtotal:0, nonTaxableSubtotal:0 };
+  const works = taxableSubtotal + nonTaxableSubtotal;
+  const design    = +document.getElementById('designCharges')?.value||0;
+  const labour    = +document.getElementById('labourCharges')?.value||0;
+  const transport = +document.getElementById('transportCharges')?.value||0;
+  const provP     = +document.getElementById('provisionalPercent')?.value||0;
+  const discP     = +document.getElementById('discountPercent')?.value||0;
+  const taxP      = +document.getElementById('taxPercent')?.value||0;
+  const taxAmt    = taxableSubtotal * taxP / 100;
+  const provAmt   = works * provP / 100;
+  const gross     = works + design + labour + transport + provAmt + taxAmt;
+  const grand     = gross - (gross * discP / 100);
+  const { grandTotal: maintAmt } = getMaintTotals ? getMaintTotals() : { grandTotal: 0 };
+  const S = currency.symbol;
+
+  let html = '';
+  if (works > 0) html += `<div class="s-item"><span class="s-label">Works</span><span class="s-val">${S}${fmt(works)}</span></div>`;
+  if (taxAmt > 0) html += `<div class="s-item"><span class="s-label">${currency.taxLabel||'VAT'}</span><span class="s-val">${S}${fmt(taxAmt)}</span></div>`;
+  if (maintAmt > 0) html += `<div class="s-item"><span class="s-label">AMC</span><span class="s-val">${S}${fmt(maintAmt)}</span></div>`;
+  html += `<div class="s-item s-grand"><span class="s-label">Contract Sum</span><span class="s-val">${S}${fmt(grand + maintAmt)}</span></div>`;
+  el.innerHTML = html;
+}
+
+// ===================== EXCEL DROPDOWN =====================
+function toggleXlDropdown(e) {
+  e.stopPropagation();
+  const menu = document.getElementById('xlDropdownMenu');
+  menu.classList.toggle('open');
+}
+function closeXlDropdown() {
+  const menu = document.getElementById('xlDropdownMenu');
+  if (menu) menu.classList.remove('open');
+}
+document.addEventListener('click', function() { closeXlDropdown(); });
+
+// ===================== QUANTITIES ONLY EXCEL =====================
+async function downloadQuantitiesExcel() {
+  if (needsLeadCapture()) { gateExport(downloadQuantitiesExcel, 'excel_qty'); return; }
+  try {
+  const ExcelJS = await loadExcelJS();
+  const wb  = new ExcelJS.Workbook();
+  const meta = getState().meta || {};
+  const slug = (meta.projectName||'BOQ').replace(/[^a-zA-Z0-9]/g,'_').replace(/__+/g,'_').slice(0,30);
+  const S = currency.symbol;
+
+  const bg = hex => ({ type:'pattern', pattern:'solid', fgColor:{argb:'FF'+hex} });
+  const ft = (hex, sz, bold, italic) => ({ color:{argb:'FF'+hex}, size:sz||9, bold:!!bold, italic:!!italic, name:'Calibri' });
+  const al = (h,v) => ({ horizontal:h||'left', vertical:v||'middle', wrapText:true });
+  const allBorders = { top:{style:'thin'}, left:{style:'thin'}, bottom:{style:'thin'}, right:{style:'thin'} };
+  const btBorder   = { top:{style:'thin'}, bottom:{style:'thin'} };
+
+  // ── Tab 1: Zone-wise ─────────────────────────────────────
+  const wsZ = wb.addWorksheet('Scope & Quantities — Zone-wise');
+  wsZ.columns = [{width:6},{width:22},{width:36},{width:22},{width:10},{width:12},{width:26}];
+
+  const hZ = wsZ.addRow(['SCOPE & QUANTITIES — ZONE-WISE (REQUEST FOR QUOTATION)', '', '', '', '', '', '']);
+  hZ.height = 24;
+  hZ.getCell(1).fill = bg('1A3829'); hZ.getCell(1).font = ft('FFFFFF',13,true);
+  wsZ.mergeCells(hZ.number, 1, hZ.number, 7);
+
+  const subZ = wsZ.addRow([`${meta.clientName||''} | ${meta.projectName||''} | ${meta.quoteRef||''} | Rev ${meta.revision||1} | ${new Date().toLocaleDateString()}`]);
+  subZ.getCell(1).font = ft('666666', 9);
+  wsZ.mergeCells(subZ.number, 1, subZ.number, 7);
+
+  const noteZ = wsZ.addRow(['For vendor quotation only. Please fill in your unit rate and return. This document does not contain pricing information.']);
+  noteZ.getCell(1).font = ft('8A4010', 8.5, false, true);
+  wsZ.mergeCells(noteZ.number, 1, noteZ.number, 7);
+  wsZ.addRow([]);
+
+  let zSerial = 0;
+  zones.forEach((zone, zi) => {
+    const zoneName = zi === 0 ? 'Project-wide' : ('Zone ' + zi + ': ' + (zone.name||''));
+    const hasItems = zone.scopes.some(sc => sc.items.some(it => (it.qty||0) > 0));
+    if (!hasItems) return;
+
+    const zh = wsZ.addRow([zoneName, '', '', '', '', '', '']);
+    zh.height = 18;
+    zh.getCell(1).fill = bg(zi===0 ? 'A8711E' : '265C3C');
+    zh.getCell(1).font = ft('FFFFFF', 11, true);
+    wsZ.mergeCells(zh.number, 1, zh.number, 7);
+
+    const ch = wsZ.addRow(['#','Category','Description','Spec / Notes','Unit','Qty','Remarks']);
+    ch.height = 15;
+    ch.eachCell(cell => { cell.fill = bg('D3C0A5'); cell.font = ft('2A1A00', 9, true); cell.border = allBorders; cell.alignment = al('center'); });
+
+    [...zone.scopes].sort((a,b)=>{ const ai=SCOPE_ORDER.indexOf(a.name),bi=SCOPE_ORDER.indexOf(b.name); return (ai===-1?999:ai)-(bi===-1?999:bi); }).forEach(sc => {
+      const sh = wsZ.addRow(['', sc.name, '', '', '', '', '']);
+      sh.height = 14;
+      sh.getCell(2).fill = bg('EDE3D1'); sh.getCell(2).font = ft('4A3010', 9, true);
+      sh.eachCell(cell => { cell.border = btBorder; });
+      wsZ.mergeCells(sh.number, 2, sh.number, 7);
+
+      sc.items.forEach(item => {
+        if (!((item.qty||0) > 0)) return;
+        const unitLbl = item.unit === 'other' ? (item.unit_other||'') : (item.unit||'nos');
+        if (item.details && item.details.length > 0) {
+          item.details.forEach(sub => {
+            if (!((sub.qty||0) > 0)) return;
+            zSerial++;
+            const subU = sub.unit === 'other' ? (sub.unit_other||'') : (sub.unit||'nos');
+            const r = wsZ.addRow([zSerial, sc.name, sub.name||item.desc, item.desc !== (sub.name||item.desc) ? item.desc : '', subU, sub.qty, '']);
+            r.height = 14;
+            r.eachCell((cell, col) => { cell.font = ft('333333', 9); cell.border = btBorder; if (col===6) { cell.alignment = al('right'); cell.numFmt = '#,##0.00'; } });
+          });
+        } else {
+          zSerial++;
+          const r = wsZ.addRow([zSerial, sc.name, item.desc, item.notes||'', unitLbl, item.qty, '']);
+          r.height = 14;
+          r.eachCell((cell, col) => { cell.font = ft('333333', 9); cell.border = btBorder; if (col===6) { cell.alignment = al('right'); cell.numFmt = '#,##0.00'; } });
+        }
+      });
+    });
+    wsZ.addRow([]);
+  });
+
+  const tzR = wsZ.addRow([`TOTAL — ${zSerial} LINE ITEMS`, '', '', '', '', '', '']);
+  tzR.height = 18;
+  tzR.eachCell(cell => { cell.fill = bg('1A3829'); cell.font = ft('FFFFFF', 10, true); cell.border = allBorders; });
+  wsZ.mergeCells(tzR.number, 1, tzR.number, 7);
+
+  // ── Tab 2: Consolidated ──────────────────────────────────
+  const wsC = wb.addWorksheet('Scope & Quantities — Consolidated');
+  wsC.columns = [{width:6},{width:22},{width:40},{width:10},{width:14},{width:26}];
+
+  const hC = wsC.addRow(['SCOPE & QUANTITIES — CONSOLIDATED', '', '', '', '', '']);
+  hC.height = 24;
+  hC.getCell(1).fill = bg('1A3829'); hC.getCell(1).font = ft('FFFFFF',13,true);
+  wsC.mergeCells(hC.number, 1, hC.number, 6);
+
+  const subC = wsC.addRow([`${meta.clientName||''} | ${meta.projectName||''} | ${meta.quoteRef||''} | Consolidated | ${new Date().toLocaleDateString()}`]);
+  subC.getCell(1).font = ft('666666', 9);
+  wsC.mergeCells(subC.number, 1, subC.number, 6);
+
+  const noteC = wsC.addRow(['Aggregated across all zones. Same item + same unit = combined quantity.']);
+  noteC.getCell(1).font = ft('8A4010', 8.5, false, true);
+  wsC.mergeCells(noteC.number, 1, noteC.number, 6);
+  wsC.addRow([]);
+
+  const aggMap = new Map();
+  zones.forEach(zone => {
+    zone.scopes.forEach(sc => {
+      sc.items.forEach(item => {
+        if (!((item.qty||0) > 0)) return;
+        const addAgg = (desc, notes, unit, qty) => {
+          const key = sc.name + '||' + desc + '||' + unit;
+          if (!aggMap.has(key)) aggMap.set(key, { scope:sc.name, desc, notes, unit, qty:0 });
+          aggMap.get(key).qty += qty;
+        };
+        if (item.details && item.details.length > 0) {
+          item.details.forEach(sub => {
+            if (!((sub.qty||0) > 0)) return;
+            const subU = sub.unit === 'other' ? (sub.unit_other||'') : (sub.unit||'nos');
+            addAgg(sub.name||item.desc, '', subU, sub.qty);
+          });
+        } else {
+          const unitLbl = item.unit === 'other' ? (item.unit_other||'') : (item.unit||'nos');
+          addAgg(item.desc, item.notes||'', unitLbl, item.qty);
+        }
+      });
+    });
+  });
+
+  const byScope = new Map();
+  SCOPE_ORDER.forEach(sn => { aggMap.forEach(e => { if (e.scope===sn) { if (!byScope.has(sn)) byScope.set(sn,[]); byScope.get(sn).push(e); }}); });
+
+  const colH = wsC.addRow(['#','Category','Description','Unit','Total Qty','Remarks']);
+  colH.height = 16;
+  colH.eachCell(cell => { cell.fill = bg('1A3829'); cell.font = ft('FFFFFF',9,true); cell.border = allBorders; cell.alignment = al('center'); });
+
+  let cSerial = 0;
+  byScope.forEach((items, scopeName) => {
+    const sh = wsC.addRow(['', scopeName, '', '', '', '']);
+    sh.height = 15;
+    sh.getCell(2).fill = bg('EDE3D1'); sh.getCell(2).font = ft('4A3010', 9, true);
+    sh.eachCell(cell => { cell.border = btBorder; });
+    wsC.mergeCells(sh.number, 2, sh.number, 6);
+    items.forEach(e => {
+      cSerial++;
+      const r = wsC.addRow([cSerial, '', e.desc, e.unit, e.qty, '']);
+      r.height = 14;
+      r.eachCell((cell, col) => { cell.font = ft('333333', 9); cell.border = btBorder; if (col===5) { cell.alignment = al('right'); cell.numFmt = '#,##0.00'; } });
+    });
+    wsC.addRow([]);
+  });
+
+  const tcR = wsC.addRow([`TOTAL — ${cSerial} UNIQUE LINE ITEMS`, '', '', '', '', '']);
+  tcR.height = 18;
+  tcR.eachCell(cell => { cell.fill = bg('1A3829'); cell.font = ft('FFFFFF', 10, true); cell.border = allBorders; });
+  wsC.mergeCells(tcR.number, 1, tcR.number, 6);
+
+  const buffer = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `${slug}_Quantities_Rev${meta.revision||1}_${new Date().toISOString().slice(0,10)}.xlsx`;
+  a.click();
+  URL.revokeObjectURL(url);
+  } catch(err) {
+    alert('Quantities export error: ' + err.message);
+    console.error('Quantities export failed:', err);
+  }
+}
+
+
+window.onload = function() {
+  buildCurrencyOptions();
+  // Gulf edition defaults to AED
+  currency = { ...CURRENCIES.find(c=>c.code==='AED') };
+  document.getElementById('currencySelect').value = 'AED';
+
+  if (isUnlocked()) {
+    const badge = document.getElementById('trialBadge');
+    if (badge) badge.style.display = 'none';
+  }
+
+  // Apply AED defaults for TRN label and T&C on first load
+  const aedCurrency = CURRENCIES.find(c=>c.code==='AED');
+  if(aedCurrency) {
+    const trnEl = document.getElementById('trnLabelEl');
+    if(trnEl) trnEl.textContent = aedCurrency.taxIdLabel;
+  }
+
+  const loaded = loadState();
+  if(!loaded) {
+    zones.push({
+      id:'zone_pw', name:'Project-wide', projectWide:true,
+      scopes:[{
+        name:'Site Preparation',
+        items: SCOPE_DATA['Site Preparation'].map(x=>({
+          desc:x.desc, unit:x.unit||'sqm', qty:0,
+          rate: x.rate||0, taxable: true,
+          notes:'', details:[], unit_other:'', hsn:''
+        }))
+      }]
+    });
+    const now = new Date();
+    document.getElementById('quoteRef').value =
+      `BOQ-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}-${String(100+Math.floor(Math.random()*900))}`;
+    document.getElementById('taxPercent').value = 5;
+  }
+  setCurrency(); // triggers renderZones + updateTotals
+  renderMaintItems();
+  updateMaint();
+  initAccordion();
+  updateAccordionHints();
+  initSplash();
+};
+</script>
+</body>
+</html>
