@@ -821,9 +821,51 @@
     }
     .picker-search-input:focus { outline: none; border-color: #265C3C; background: #fff; }
 
+  
+  /* ── TerraOS Ecosystem Strip ─────────────────────────────── */
+  .terra-eco-strip {
+    background: #1A3829;
+    color: #79AE90;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .5px;
+    text-align: center;
+    padding: 6px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    position: relative;
+    z-index: 100;
+  }
+  .terra-eco-strip a {
+    color: #EAE6DF;
+    text-decoration: none;
+    transition: color .15s;
+  }
+  .terra-eco-strip a:hover { color: #A87118; }
+  .terra-eco-strip a.eco-active { color: #A87118; font-weight: 700; }
+  .terra-eco-strip .eco-sep { opacity: .35; }
+  .terra-eco-strip .eco-soon { opacity: .45; cursor: default; }
+
   </style>
 </head>
 <body>
+<div class="terra-eco-strip">
+  <a href="https://terraio.vercel.app">TerraOS</a>
+  <span class="eco-sep">·</span>
+  <a href="https://terrascope-ten.vercel.app">TerraScope</a>
+  <span class="eco-sep">·</span>
+  <span class="eco-soon">TerraDesign <sup>soon</sup></span>
+  <span class="eco-sep">·</span>
+  <a href="https://terra-cost-landing.vercel.app">TerraCost</a>
+  <span class="eco-sep">·</span>
+  <span class="eco-soon">TerraExec <sup>soon</sup></span>
+  <span class="eco-sep">|</span>
+  <a href="https://terra-cost-india.vercel.app" style="color:#A87118;">🇮🇳 India Edition</a>
+</div>
 
 <div id="splashOverlay">
   <div class="splash-dot"></div>
@@ -850,6 +892,7 @@
 
   <!-- HEADER -->
   <div class="app-header">
+<div style="font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:#79AE90;margin-bottom:4px;"><a href="https://terraio.vercel.app" style="color:inherit;text-decoration:none;">by TerraOS</a></div>
     <div class="app-header-brand">TerraCost <span style="font-size:12px;font-weight:400;opacity:0.55;letter-spacing:0.5px;margin-left:4px;">Gulf</span></div>
     <span id="trialBadge" style="background:rgba(168,113,30,.2);border:1px solid rgba(168,113,30,.4);color:#C08828;border-radius:20px;padding:3px 12px;font-size:11px;font-weight:600;margin-left:10px;"></span>
     <div class="app-header-sub">Prepare accurate landscape BOQs and tender documents — AED · SAR · QAR · KWD · OMR</div>
