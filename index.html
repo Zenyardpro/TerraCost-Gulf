@@ -864,7 +864,7 @@
   <span class="eco-sep">·</span>
   <span class="eco-soon">TerraExec <sup>soon</sup></span>
   <span class="eco-sep">|</span>
-  <a href="https://terra-cost-india.vercel.app" style="color:#A87118;">🇮🇳 India Edition</a>
+  <a href="https://app.terracost.in" style="color:#A87118;">🇮🇳 India Edition</a>
 </div>
 
 <div id="splashOverlay">
@@ -1231,9 +1231,9 @@
 <script>
 (function() {
   var host = window.location.hostname;
-  var allowed = ['terracostgulf.vercel.app', 'terracostgulf.netlify.app', 'terracostindia.netlify.app', 'terracost.netlify.app', 'localhost', '127.0.0.1', ''];
-  if (!allowed.includes(host)) {
-    document.documentElement.innerHTML = '<html><head><style>*{margin:0;padding:0;box-sizing:border-box;}html,body{width:100%;height:100%;background:#0D2B1E;overflow:hidden;}body{display:flex;align-items:center;justify-content:center;font-family:sans-serif;}</style></head><body><div style="text-align:center;color:#fff;padding:32px;max-width:400px;"><div style="font-size:30px;font-weight:700;color:#A8711E;margin-bottom:14px;">TerraCost</div><p style="opacity:.65;font-size:14px;line-height:1.8;">This tool must be accessed from the official link.<br><br>Please visit:</p><br><a href="https://terracostgulf.vercel.app" style="color:#A8711E;font-weight:700;font-size:16px;">terracostgulf.vercel.app</a></div></body></html>';
+  var allowed = ['terracostgulf.vercel.app', 'terracostgulf.netlify.app', 'terracostindia.netlify.app', 'terracost.netlify.app', 'gulf.terracost.io', 'terracost.io', 'localhost', '127.0.0.1', ''];
+  if (!allowed.includes(host) && !host.endsWith('.terracost.io')) {
+    document.documentElement.innerHTML = '<html><head><style>*{margin:0;padding:0;box-sizing:border-box;}html,body{width:100%;height:100%;background:#0D2B1E;overflow:hidden;}body{display:flex;align-items:center;justify-content:center;font-family:sans-serif;}</style></head><body><div style="text-align:center;color:#fff;padding:32px;max-width:400px;"><div style="font-size:30px;font-weight:700;color:#A8711E;margin-bottom:14px;">TerraCost</div><p style="opacity:.65;font-size:14px;line-height:1.8;">This tool must be accessed from the official link.<br><br>Please visit:</p><br><a href="https://gulf.terracost.io" style="color:#A8711E;font-weight:700;font-size:16px;">gulf.terracost.io</a></div></body></html>';
     throw new Error('x');
   }
 })();
@@ -3352,7 +3352,7 @@ function downloadPDF() {
     doc.setFontSize(8); doc.setTextColor(150);
     doc.text(`${meta.quoteRef||'BOQ'}  |  Rev ${meta.revision||1}  |  Page ${i} of ${totalPages}`, pw/2, ph-7, {align:'center'});
     doc.setFontSize(7); doc.setTextColor(180);
-    doc.text('Prepared using TerraCost · terracostgulf.vercel.app', pw/2, ph-3, {align:'center'});
+    doc.text('Prepared using TerraCost · gulf.terracost.io', pw/2, ph-3, {align:'center'});
   }
 
   // ---- Dynamic filename ----
