@@ -850,6 +850,13 @@
   .terra-eco-strip .eco-sep { opacity: .35; }
   .terra-eco-strip .eco-soon { opacity: .45; cursor: default; }
 
+  /* ── App footer ─────────────────────────────────── */
+  .app-footer { margin: 40px 0 120px; padding-top: 18px; border-top: 1px solid #EDE8E0; text-align: center; font-size: 12px; color: #9E8E7E; }
+  .app-footer-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; margin-bottom: 8px; }
+  .app-footer-links a { color: #4A3010; text-decoration: none; font-weight: 500; }
+  .app-footer-links a:hover { color: #A87118; text-decoration: underline; }
+  .app-footer-legal { font-size: 11px; opacity: .8; }
+
   </style>
 </head>
 <body>
@@ -858,11 +865,7 @@
   <span class="eco-sep">·</span>
   <a href="https://terrascope-ten.vercel.app">TerraScope</a>
   <span class="eco-sep">·</span>
-  <span class="eco-soon">TerraDesign <sup>soon</sup></span>
-  <span class="eco-sep">·</span>
-  <a href="https://terra-cost-landing.vercel.app">TerraCost</a>
-  <span class="eco-sep">·</span>
-  <span class="eco-soon">TerraExec <sup>soon</sup></span>
+  <a href="https://terracost.io" class="eco-active">TerraCost</a>
   <span class="eco-sep">|</span>
   <a href="https://app.terracost.in" style="color:#A87118;">🇮🇳 India Edition</a>
 </div>
@@ -1146,6 +1149,18 @@
   <div class="totals-wrap">
     <div class="totals-block" id="totalsBlock"></div>
   </div>
+
+  <!-- APP FOOTER -->
+  <footer class="app-footer">
+    <div class="app-footer-links">
+      <a href="https://terracost.io/about.html">About</a>
+      <a href="https://terracost.io/contact.html">Contact</a>
+      <a href="https://terracost.io/privacy.html">Privacy</a>
+      <a href="https://terracost.io/terms.html">Terms</a>
+      <a href="mailto:support@terracost.io">support@terracost.io</a>
+    </div>
+    <div class="app-footer-legal">&copy; 2026 SOW Business Solutions Pvt Ltd &middot; Bengaluru, India &middot; TerraCost is part of TerraOS</div>
+  </footer>
 
 </div>
 
@@ -3080,7 +3095,7 @@ function downloadPDF() {
   // ---- Header ----
   doc.setFillColor(20,60,100); doc.rect(0,0,pw,22,'F');
   doc.setFontSize(14); doc.setFont("helvetica","bold"); doc.setTextColor(255,245,220);
-  doc.text("BILL OF QUANTITIES & COST ESTIMATE", pw/2, 9, {align:"center"});
+  doc.text("LANDSCAPE BILL OF QUANTITIES & PROPOSAL", pw/2, 9, {align:"center"});
   doc.setFontSize(9); doc.setFont("helvetica","normal");
   const firmLine = [meta.firmName, meta.preparedBy, meta.firmContact].filter(Boolean).join('  |  ');
   doc.text(firmLine||"", pw/2, 16, {align:"center"});
@@ -3352,7 +3367,7 @@ function downloadPDF() {
     doc.setFontSize(8); doc.setTextColor(150);
     doc.text(`${meta.quoteRef||'BOQ'}  |  Rev ${meta.revision||1}  |  Page ${i} of ${totalPages}`, pw/2, ph-7, {align:'center'});
     doc.setFontSize(7); doc.setTextColor(180);
-    doc.text('Prepared using TerraCost · gulf.terracost.io', pw/2, ph-3, {align:'center'});
+    doc.text('Prepared with TerraCost  ·  terracost.io', pw/2, ph-3, {align:'center'});
   }
 
   // ---- Dynamic filename ----
