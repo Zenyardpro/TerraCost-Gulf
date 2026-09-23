@@ -1588,47 +1588,7 @@
   var host = window.location.hostname;
   var allowed = ['terracostgulf.vercel.app', 'terracostgulf.netlify.app', 'terracostindia.netlify.app', 'terracost.netlify.app', 'gulf.terracost.io', 'terracost.io', 'localhost', '127.0.0.1', ''];
   if (!allowed.includes(host) && !host.endsWith('.terracost.io')) {
-    document.documentElement.innerHTML = '<html><head><style>*{margin:0;padding:0;box-sizing:border-box;}html,body{width:100%;height:100%;background:#0D2B1E;overflow:hidden;}body{display:flex;align-items:center;justify-content:center;font-family:sans-serif;}</style></head><body><div style="text-align:center;color:#fff;padding:32px;max-width:400px;"><div style="font-size:30px;font-weight:700;color:#A8711E;margin-bottom:14px;">TerraCost</div><p style="opacity:.65;font-size:14px;line-height:1.8;">This tool must be accessed from the official link.<br><br>Please visit:</p><br><a href="https://gulf.terracost.io" style="color:#A8711E;font-weight:700;font-size:16px;">gulf.terracost.io</a></div>
-<div class="tc-overlay" id="upgradeOverlay">
-  <div class="tc-modal">
-    <h2>Upgrade to TerraCost Pro</h2>
-    <p class="upgrade-reason" id="upgradeReason"></p>
-    <ul class="upgrade-features">
-      <li>Cloud save &amp; project history</li>
-      <li>Excel (.xlsx) export</li>
-      <li>Custom header, footer &amp; logo on PDFs</li>
-      <li>Full plant library access</li>
-    </ul>
-    <div class="upgrade-plans">
-      <div class="upgrade-plan" onclick="startCheckout('monthly')">
-        <div class="plan-name">Monthly</div>
-        <div class="plan-price">AED 55</div>
-        <div class="plan-desc">per month</div>
-      </div>
-      <div class="upgrade-plan featured" onclick="startCheckout('yearly')">
-        <div class="plan-name">Annual &#9733;</div>
-        <div class="plan-price">AED 499</div>
-        <div class="plan-desc">per year &mdash; save 25%</div>
-      </div>
-    </div>
-    <button class="tc-close-btn" onclick="closeUpgradeModal()">Maybe later</button>
-  </div>
-</div>
-<div class="tc-overlay" id="profileOverlay">
-  <div class="tc-modal">
-    <h2>Your Profile</h2>
-    <span class="tier-badge tier-free" id="profileTierBadge">FREE</span>
-    <div class="profile-field"><label>Full Name</label><input type="text" id="pfFullName" placeholder="Your name"></div>
-    <div class="profile-field"><label>Company Name</label><input type="text" id="pfCompany" placeholder="Studio name"></div>
-    <div class="profile-field"><label>Phone</label><input type="text" id="pfPhone" placeholder="+971 50 123 4567"></div>
-    <div class="profile-field"><label>TRN / VAT Number</label><input type="text" id="pfGSTIN" placeholder="100123456700003"></div>
-    <div class="profile-field"><label>PDF Header Text (Pro)</label><input type="text" id="pfHeader" placeholder="Company name &amp; tagline on exports"></div>
-    <div class="profile-field"><label>PDF Footer Text (Pro)</label><input type="text" id="pfFooter" placeholder="Contact info on exports"></div>
-    <button class="profile-save" onclick="saveProfile()">Save Profile</button>
-    <button class="tc-close-btn" onclick="closeProfilePanel()">Close</button>
-  </div>
-</div>
-</body></html>';
+    document.documentElement.innerHTML = '<html><head><style>*{margin:0;padding:0;box-sizing:border-box;}html,body{width:100%;height:100%;background:#0D2B1E;overflow:hidden;}body{display:flex;align-items:center;justify-content:center;font-family:sans-serif;}</style></head><body><div style="text-align:center;color:#fff;padding:32px;max-width:400px;"><div style="font-size:30px;font-weight:700;color:#A8711E;margin-bottom:14px;">TerraCost</div><p style="opacity:.65;font-size:14px;line-height:1.8;">This tool must be accessed from the official link.<br><br>Please visit:</p><br><a href="https://gulf.terracost.io" style="color:#A8711E;font-weight:700;font-size:16px;">gulf.terracost.io</a></div></body></html>';
     throw new Error('x');
   }
 })();
@@ -5852,5 +5812,44 @@ if (document.readyState === 'loading') {
 
 <!-- Razorpay -->
 <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
+<div class="tc-overlay" id="upgradeOverlay">
+  <div class="tc-modal">
+    <h2>Upgrade to TerraCost Pro</h2>
+    <p class="upgrade-reason" id="upgradeReason"></p>
+    <ul class="upgrade-features">
+      <li>Cloud save &amp; project history</li>
+      <li>Excel (.xlsx) export</li>
+      <li>Custom header, footer &amp; logo on PDFs</li>
+      <li>Full plant library access</li>
+    </ul>
+    <div class="upgrade-plans">
+      <div class="upgrade-plan" onclick="startCheckout('monthly')">
+        <div class="plan-name">Monthly</div>
+        <div class="plan-price">AED 55</div>
+        <div class="plan-desc">per month</div>
+      </div>
+      <div class="upgrade-plan featured" onclick="startCheckout('yearly')">
+        <div class="plan-name">Annual &#9733;</div>
+        <div class="plan-price">AED 499</div>
+        <div class="plan-desc">per year &mdash; save 25%</div>
+      </div>
+    </div>
+    <button class="tc-close-btn" onclick="closeUpgradeModal()">Maybe later</button>
+  </div>
+</div>
+<div class="tc-overlay" id="profileOverlay">
+  <div class="tc-modal">
+    <h2>Your Profile</h2>
+    <span class="tier-badge tier-free" id="profileTierBadge">FREE</span>
+    <div class="profile-field"><label>Full Name</label><input type="text" id="pfFullName" placeholder="Your name"></div>
+    <div class="profile-field"><label>Company Name</label><input type="text" id="pfCompany" placeholder="Studio name"></div>
+    <div class="profile-field"><label>Phone</label><input type="text" id="pfPhone" placeholder="+971 50 123 4567"></div>
+    <div class="profile-field"><label>TRN / VAT Number</label><input type="text" id="pfGSTIN" placeholder="100123456700003"></div>
+    <div class="profile-field"><label>PDF Header Text (Pro)</label><input type="text" id="pfHeader" placeholder="Company name &amp; tagline on exports"></div>
+    <div class="profile-field"><label>PDF Footer Text (Pro)</label><input type="text" id="pfFooter" placeholder="Contact info on exports"></div>
+    <button class="profile-save" onclick="saveProfile()">Save Profile</button>
+    <button class="tc-close-btn" onclick="closeProfilePanel()">Close</button>
+  </div>
+</div>
 </body>
 </html>
