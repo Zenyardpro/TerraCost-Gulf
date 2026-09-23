@@ -4705,7 +4705,7 @@ function toggleDiscountField() {
 // These codes are distributed manually after payment confirmation.
 // Each code works once per browser. Update this list as you scale.
 
-const PRO_PRICE_TEXT = '$22 / month';
+const PRO_PRICE_TEXT = 'AED 55 / month';
 const PRO_REGION = 'Gulf';
 // ===================== PRO ACCESS (server-verified) =====================
 // Pro status lives in Supabase (table pro_access, filled by payments or by redeem_unlock_code()).
@@ -4754,7 +4754,7 @@ function showProGate(retry) {
       '<div style="font-size:13px;color:#5C574F;line-height:1.5;margin-bottom:12px;">PDF export stays free. Pro unlocks Excel BOQ and quantities exports, cloud save and your own branding.</div>' +
       '<div style="font-size:22px;font-weight:700;margin-bottom:2px;">' + PRO_PRICE_TEXT + '</div>' +
       '<div style="font-size:11.5px;color:#7E786F;margin-bottom:14px;">Founding price, locked for life for the first 500 users</div>' +
-      '<a href="mailto:sales@terracost.io?subject=' + encodeURIComponent('TerraCost Pro — ' + PRO_REGION) + '" style="display:block;text-align:center;background:#A8711E;color:#fff;text-decoration:none;font-weight:600;padding:11px;border-radius:8px;margin-bottom:14px;">Get Pro</a>' +
+      '<button type="button" onclick="startCheckout(\"yearly\")" style="display:block;width:100%;text-align:center;background:#A8711E;color:#fff;border:none;font-weight:600;padding:11px;border-radius:8px;margin-bottom:14px;cursor:pointer;font-size:15px;">Get Pro — AED 499/yr</button>' + '<button type="button" onclick="startCheckout(\"monthly\")" style="display:block;width:100%;text-align:center;background:transparent;color:#A8711E;border:2px solid #A8711E;font-weight:600;padding:9px;border-radius:8px;margin-bottom:14px;cursor:pointer;font-size:13px;">Monthly — AED 55/mo</button>' +
       (loggedIn
         ? '<div style="font-size:12px;color:#5C574F;margin-bottom:6px;">Have an unlock code?</div>' +
           '<div style="display:flex;gap:8px;"><input id="proCodeInput" type="text" placeholder="Enter code" autocomplete="off" style="flex:1;margin:0;text-transform:uppercase;">' +
