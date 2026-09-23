@@ -7,6 +7,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
     <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
 
@@ -857,6 +858,253 @@
   .app-footer-links a:hover { color: #A87118; text-decoration: underline; }
   .app-footer-legal { font-size: 11px; opacity: .8; }
 
+
+    /* ── Auth UI ─────────────────────────────────────── */
+    .auth-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 32px;
+      background: var(--cream);
+      border-bottom: 1px solid var(--border-lt);
+      font-size: 12.5px;
+      flex-wrap: wrap;
+    }
+    .auth-bar .auth-user {
+      color: var(--forest);
+      font-weight: 600;
+      font-size: 12px;
+    }
+    .auth-bar .auth-email {
+      color: var(--stone-lt);
+      font-size: 11.5px;
+    }
+    .auth-bar button {
+      font-size: 11px;
+      padding: 4px 12px;
+      border-radius: 4px;
+      background: var(--white);
+      color: var(--stone);
+      border: 1px solid var(--border);
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .auth-bar button:hover { background: var(--sand); color: var(--stone-dk); }
+    .auth-bar button.auth-save-btn {
+      background: var(--forest);
+      color: #fff;
+      border: none;
+    }
+    .auth-bar button.auth-save-btn:hover { background: var(--forest-mid); }
+    .auth-bar .auth-login-link {
+      color: var(--brass);
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: underline;
+      font-size: 12px;
+    }
+
+    /* Auth modal */
+    #authModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      background: rgba(10,20,14,.82);
+      backdrop-filter: blur(6px);
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    #authModal.open { display: flex; }
+    .auth-modal-box {
+      background: var(--white);
+      border-radius: 12px;
+      max-width: 400px;
+      width: 100%;
+      padding: 32px 28px 24px;
+      box-shadow: var(--shadow-lg);
+    }
+    .auth-modal-box h2 {
+      color: var(--forest);
+      margin: 0 0 6px;
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .auth-modal-box .auth-sub {
+      color: var(--stone-lt);
+      font-size: 12.5px;
+      margin-bottom: 20px;
+    }
+    .auth-modal-box input[type="email"],
+    .auth-modal-box input[type="password"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13.5px;
+      margin-bottom: 10px;
+      font-family: inherit;
+      background: var(--white);
+    }
+    .auth-modal-box input:focus {
+      outline: none;
+      border-color: var(--sage);
+      box-shadow: 0 0 0 3px rgba(74,128,96,.10);
+    }
+    .auth-modal-box .auth-btn-primary {
+      width: 100%;
+      padding: 12px;
+      background: var(--forest);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      margin-top: 4px;
+    }
+    .auth-modal-box .auth-btn-primary:hover { background: var(--forest-mid); }
+    .auth-modal-box .auth-toggle {
+      text-align: center;
+      font-size: 12px;
+      color: var(--stone-lt);
+      margin-top: 14px;
+    }
+    .auth-modal-box .auth-toggle a {
+      color: var(--brass);
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    .auth-modal-box .auth-error {
+      color: var(--red);
+      font-size: 12px;
+      min-height: 16px;
+      margin-top: 6px;
+    }
+    .auth-modal-box .auth-close {
+      position: absolute;
+      top: 12px;
+      right: 14px;
+      background: none;
+      border: none;
+      font-size: 22px;
+      color: var(--stone-lt);
+      cursor: pointer;
+    }
+
+    /* Projects panel */
+    #projectsPanel {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 9500;
+      background: rgba(10,20,14,.78);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    #projectsPanel.open { display: flex; }
+    .projects-panel-box {
+      background: var(--white);
+      border-radius: 14px;
+      max-width: 520px;
+      width: 100%;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-lg);
+    }
+    .projects-panel-header {
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid var(--border-lt);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .projects-panel-header h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--forest);
+      border: none;
+      padding: 0;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+    .projects-panel-header button {
+      background: none;
+      border: none;
+      font-size: 22px;
+      cursor: pointer;
+      color: var(--stone-lt);
+      padding: 4px 8px;
+    }
+    .projects-panel-list {
+      overflow-y: auto;
+      flex: 1;
+      padding: 10px 14px;
+    }
+    .projects-panel-list .proj-empty {
+      text-align: center;
+      color: var(--stone-lt);
+      font-size: 13px;
+      padding: 32px 16px;
+    }
+    .proj-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 10px;
+      border-radius: 8px;
+      border-bottom: 1px solid var(--border-lt);
+      transition: background .1s;
+    }
+    .proj-item:last-child { border-bottom: none; }
+    .proj-item:hover { background: var(--green-pale); }
+    .proj-item-info { flex: 1; min-width: 0; }
+    .proj-item-name {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--stone-dk);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .proj-item-date {
+      font-size: 11px;
+      color: var(--stone-lt);
+      margin-top: 2px;
+    }
+    .proj-item-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .proj-item-actions button {
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      font-family: inherit;
+    }
+    .proj-item-actions .btn-load {
+      background: var(--forest);
+      color: #fff;
+      border: none;
+    }
+    .proj-item-actions .btn-load:hover { background: var(--forest-mid); }
+    .proj-item-actions .btn-del {
+      background: var(--white);
+      color: var(--red);
+      border: 1px solid var(--red);
+    }
+    .proj-item-actions .btn-del:hover { background: #FDF5F5; }
+
+    @media (max-width: 700px) {
+      .auth-bar { padding: 8px 16px; }
+    }
+
   </style>
 </head>
 <body>
@@ -899,6 +1147,22 @@
     <div class="app-header-brand">TerraCost <span style="font-size:12px;font-weight:400;opacity:0.55;letter-spacing:0.5px;margin-left:4px;">Gulf</span></div>
     <span id="trialBadge" style="background:rgba(168,113,30,.2);border:1px solid rgba(168,113,30,.4);color:#C08828;border-radius:20px;padding:3px 12px;font-size:11px;font-weight:600;margin-left:10px;"></span>
     <div class="app-header-sub">Prepare accurate landscape BOQs and tender documents — AED · SAR · QAR · KWD · OMR</div>
+  </div>
+
+  <!-- AUTH BAR -->
+  <div class="auth-bar" id="authBar" style="display:none;">
+    <div id="authLoggedOut" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <span style="color:var(--stone-lt);font-size:11.5px;">Sign in to save projects to cloud</span>
+      <span class="auth-login-link" onclick="openAuthModal('login')">Log In</span>
+      <span style="color:var(--border);font-size:11px;">|</span>
+      <span class="auth-login-link" onclick="openAuthModal('signup')">Sign Up</span>
+    </div>
+    <div id="authLoggedIn" style="display:none;align-items:center;gap:10px;width:100%;flex-wrap:wrap;">
+      <span class="auth-email" id="authUserEmail"></span>
+      <button class="auth-save-btn" onclick="cloudSaveProject()">&#9729; Save Project</button>
+      <button onclick="openProjectsPanel()">My Projects</button>
+      <button onclick="supaLogout()" style="margin-left:auto;">Log Out</button>
+    </div>
   </div>
 
   <!-- TOP BAR -->
@@ -1181,6 +1445,36 @@
           <span class="xl-opt-sub">No rates — send to vendors for quotes</span>
         </button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div id="authModal" onclick="if(event.target===this)closeAuthModal()">
+  <div class="auth-modal-box" style="position:relative;">
+    <button class="auth-close" onclick="closeAuthModal()">&times;</button>
+    <h2 id="authModalTitle">Log In</h2>
+    <p class="auth-sub" id="authModalSub">Access your saved BOQ projects from any device.</p>
+    <input type="email" id="authEmail" placeholder="Email address" autocomplete="email">
+    <input type="password" id="authPassword" placeholder="Password (min 6 chars)" autocomplete="current-password"
+      onkeydown="if(event.key==='Enter')authSubmit()">
+    <button class="auth-btn-primary" id="authSubmitBtn" onclick="authSubmit()">Log In</button>
+    <div class="auth-error" id="authError"></div>
+    <div class="auth-toggle" id="authToggle">
+      Don't have an account? <a onclick="toggleAuthMode()">Sign Up</a>
+    </div>
+  </div>
+</div>
+
+<!-- MY PROJECTS PANEL -->
+<div id="projectsPanel" onclick="if(event.target===this)closeProjectsPanel()">
+  <div class="projects-panel-box">
+    <div class="projects-panel-header">
+      <h3>My Saved Projects</h3>
+      <button onclick="closeProjectsPanel()">&times;</button>
+    </div>
+    <div class="projects-panel-list" id="projectsList">
+      <div class="proj-empty">Loading...</div>
     </div>
   </div>
 </div>
@@ -1656,14 +1950,15 @@ function openScopePicker(zi) {
   document.getElementById('scopePickerTitle').textContent = 'Add Scopes — ' + zoneName;
 
   const list = document.getElementById('scopePickerList');
-  const scopesToShow = SCOPE_ORDER.filter(k => SCOPE_DATA[k]);
+  const scopesToShow = SCOPE_ORDER.filter(k => SCOPE_DATA[k])
+    .concat(Object.keys(SCOPE_DATA).filter(k => !SCOPE_ORDER.includes(k)));
   list.innerHTML = scopesToShow.map(k => {
     const isAdded = added.has(k);
     return `<div class="scope-picker-item${isAdded ? ' already-added' : ''}" onclick="togglePickerScope('${k.replace(/'/g,"\\'")}',this)">
       <input type="checkbox" id="spck_${k.replace(/[^a-z]/gi,'_')}"
         ${isAdded ? 'disabled checked' : ''}
         onclick="event.stopPropagation();togglePickerScope('${k.replace(/'/g,"\\'")}',this.closest('.scope-picker-item'))">
-      <label for="spck_${k.replace(/[^a-z]/gi,'_')}">${k}</label>
+      <label>${k}</label>
       ${isAdded ? '<span class="already-tag">✓ Added</span>' : ''}
     </div>`;
   }).join('');
@@ -1849,7 +2144,7 @@ function renderItemPickerList(template, existing) {
       ' onclick="toggleItemPicker(' + idx + ', this)" data-idx="' + idx + '">' +
       '<input type="checkbox" id="ipck_' + idx + '" ' + (alreadyIn ? 'disabled' : '') +
       ' onclick="event.stopPropagation();toggleItemPicker(' + idx + ',this.closest(\'.item-picker-item\'))">' +
-      '<label for="ipck_' + idx + '">' + x.desc + lBadges + '</label></div>';
+      '<label>' + x.desc + lBadges + '</label></div>';
   }).join('');
   _itemPickerSel.forEach(idx => {
     const el = list.querySelector(`[data-idx="${idx}"]`);
@@ -2357,7 +2652,7 @@ function loadState() {
       })));
       // Migrate: back-fill AED rates where rate is 0 but SCOPE_DATA has a rate
       const gulfCodes = ['AED','SAR','QAR','KWD','OMR','BHD'];
-      if (gulfCodes.includes(s.currencyCode) || gulfCodes.includes(currency.code)) {
+      if ((!s._v || s._v < 4) && (gulfCodes.includes(s.currencyCode) || gulfCodes.includes(currency.code))) {
         zones.forEach(z=>z.scopes.forEach(sc=>{
           const template = SCOPE_DATA[sc.name];
           if (!template) return;
@@ -2411,6 +2706,7 @@ function readImport(input) {
       if (!s.zones||!s.meta) { alert('Invalid BOQ file.'); return; }
       if (!confirm('Load this BOQ? Current data will be replaced.')) return;
       localStorage.setItem('boq_gulf_v1', JSON.stringify(s));
+      if (typeof clearCurrentProject === 'function') clearCurrentProject();
       location.reload();
     } catch(err) { alert('Could not read file: '+err.message); }
   };
@@ -2421,6 +2717,7 @@ function readImport(input) {
 function newBOQ() {
   if (!confirm('Start a new blank BOQ? All current data will be cleared.')) return;
   try { localStorage.removeItem('boq_gulf_v1'); } catch(e) {}
+  if (typeof clearCurrentProject === 'function') clearCurrentProject();
 
   zones = [{ id:'zone_pw', name:'Project-wide', projectWide:true, scopes:[] }];
   maintItems = [];
@@ -2498,6 +2795,7 @@ function setCurrency() {
 
   renderZones();
   updateTotals();
+  updateMaint();
 }
 
 // Site prep is now a scope inside the Project-wide zone — no separate block needed
@@ -2508,7 +2806,12 @@ function addZone() {
   zones.push({ id:'zone_'+idx, name:'Zone '+idx, scopes:[] });
   renderZones(); updateTotals();
 }
-function removeZone(idx) { if(idx===0) return; zones.splice(idx,1); renderZones(); updateTotals(); }
+function removeZone(idx) {
+  if(idx===0) return;
+  const z = zones[idx];
+  if (z && z.scopes.length && !confirm('Delete zone "' + (z.name||'') + '" and everything in it?')) return;
+  zones.splice(idx,1); renderZones(); updateTotals();
+}
 
 // ===================== RATE MEMORY =====================
 function getRateMem(code, desc) {
@@ -2527,19 +2830,37 @@ function saveItemRate(zi,si,ii) {
 }
 
 function addCustomScopeTemplate() {
-  const name = prompt('New Scope Name:'); if(!name) return;
+  let name = prompt('New Scope Name:'); if(!name) return;
+  name = name.replace(/["'<>\\]/g,'').trim(); if(!name) return;
   if(!SCOPE_DATA[name]) SCOPE_DATA[name]=[];
-  alert('Scope "'+name+'" created. Add it inside any Zone via the Scope dropdown.');
+  alert('Scope "'+name+'" created. Add it to any zone via + Add Scope.');
   renderZones();
 }
-function removeScope(zi,si) { zones[zi].scopes.splice(si,1); renderZones(); updateTotals(); }
+function removeScope(zi,si) {
+  const sc = zones[zi].scopes[si];
+  if (sc && sc.items.length && !confirm('Remove "' + sc.name + '" and its ' + sc.items.length + ' line item(s)?')) return;
+  zones[zi].scopes.splice(si,1); renderZones(); updateTotals();
+}
 
 function updateItem(zi,si,ii,what,value) {
   const item = zones[zi].scopes[si].items[ii];
   if(item.details.length) return;
   if(what==='qty') item.qty=parseFloat(value)||0;
   if(what==='rate') { item.rate=parseFloat(value)||0; saveItemRate(zi,si,ii); }
+  refreshLineCells(zi,si,ii);
   updateTotals();
+}
+// Refresh one line's visible qty/rate/total without re-rendering (keeps focus)
+function refreshLineCells(zi,si,ii) {
+  const item = zones[zi] && zones[zi].scopes[si] && zones[zi].scopes[si].items[ii];
+  if (!item) return;
+  const k = zi+'_'+si+'_'+ii;
+  const t = document.getElementById('lt_'+k);
+  if (t) t.textContent = currency.symbol + fmt((item.qty||0)*(item.rate||0));
+  if (item.details && item.details.length) {
+    const q = document.getElementById('lq_'+k); if (q && document.activeElement!==q) q.value = item.qty;
+    const r = document.getElementById('lr_'+k); if (r && document.activeElement!==r) r.value = item.rate;
+  }
 }
 function updateField(zi,si,ii,field,value) {
   const item = zones[zi].scopes[si].items[ii];
@@ -2589,7 +2910,10 @@ function updateDetailField(zi,si,ii,subi,field,value) {
   const det=zones[zi].scopes[si].items[ii].details[subi];
   if(field==='qty'||field==='rate') det[field]=parseFloat(value)||0;
   else det[field]=value;
+  const sc = document.getElementById('st_'+zi+'_'+si+'_'+ii+'_'+subi);
+  if (sc) sc.textContent = currency.symbol + fmt((det.qty||0)*(det.rate||0));
   updateDetailTotal(zi,si,ii);
+  refreshLineCells(zi,si,ii);
 }
 function updateDetailUnit(zi,si,ii,subi,value) {
   const det=zones[zi].scopes[si].items[ii].details[subi];
@@ -2618,7 +2942,7 @@ function renderZones() {
     let html = `<div class="zone-block${isPW?' zone-pw':''}" id="${zone.id}">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
         ${isPW?'<span class="zone-pw-label">Project-wide</span>':'<label style="margin:0;white-space:nowrap;">Zone Name:</label>'}
-        <input type="text" value="${zone.name}" onchange="zones[${zi}].name=this.value;scheduleSave();"
+        <input type="text" value="${String(zone.name||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" onchange="zones[${zi}].name=this.value;scheduleSave();"
           style="flex:1;min-width:140px;margin:0;" ${isPW?'placeholder="Project-wide"':''}>
         ${isPW?'':'<button type="button" class="secondary smallbtn" onclick="removeZone('+zi+')" style="background:#B03A3A;">&times; Delete Zone</button>'}
       </div>
@@ -2681,13 +3005,13 @@ function renderZones() {
                 oninput="updateUnitOther(${zi},${si},${ii},this.value)">
             </td>
             <td>
-              <input type="number" min="0" step="any" value="${item.qty}" style="width:62px;"
+              <input type="number" min="0" step="any" value="${item.qty}" id="lq_${zi}_${si}_${ii}" onfocus="this.select()" style="width:62px;"
                 onchange="updateItem(${zi},${si},${ii},'qty',this.value)"
                 oninput="this.value=this.value.replace(/[^0-9.]/g,'')"
                 ${isDetail?'readonly tabindex="-1"':''}>
             </td>
             <td>
-              <input type="number" min="0" step="any" value="${item.rate}" style="width:86px;"
+              <input type="number" min="0" step="any" value="${item.rate}" id="lr_${zi}_${si}_${ii}" onfocus="this.select()" style="width:86px;"
                 onchange="updateItem(${zi},${si},${ii},'rate',this.value);saveItemRate(${zi},${si},${ii})"
                 oninput="this.value=this.value.replace(/[^0-9.]/g,'')"
                 ${isDetail?'readonly tabindex="-1"':''}>
@@ -2696,7 +3020,7 @@ function renderZones() {
               <input type="text" style="width:82px;" value="${item.hsn||''}"
                 onchange="updateField(${zi},${si},${ii},'hsn',this.value)" placeholder="Tax Code">
             </td>
-            <td style="text-align:right;">${currency.symbol}${fmt(item.qty*item.rate)}</td>
+            <td style="text-align:right;" id="lt_${zi}_${si}_${ii}">${currency.symbol}${fmt(item.qty*item.rate)}</td>
             <td style="text-align:center;">
               <input type="checkbox" ${item.taxable?"checked":""} title="VAT applicable?"
                 onchange="setItemTax(${zi},${si},${ii},this.checked)">
@@ -2744,7 +3068,7 @@ function renderZones() {
                           oninput="this.value=this.value.replace(/[^0-9.]/g,'');updateDetailField(${zi},${si},${ii},${subi},'rate',this.value)"></td>
                         <td><input type="text" style="width:72px;" value="${sub.hsn||''}"
                           oninput="updateDetailField(${zi},${si},${ii},${subi},'hsn',this.value)" placeholder="Tax Code"></td>
-                        <td style="text-align:right;">${currency.symbol}${fmt((sub.qty||0)*(sub.rate||0))}</td>
+                        <td style="text-align:right;" id="st_${zi}_${si}_${ii}_${subi}">${currency.symbol}${fmt((sub.qty||0)*(sub.rate||0))}</td>
                         <td><button class="rowbtn" type="button"
                           onclick="deleteDetailRow(${zi},${si},${ii},${subi})">&times;</button></td>
                       </tr>`;
@@ -2840,6 +3164,7 @@ function updateTotals() {
   document.getElementById('totalsBlock').innerHTML = html;
   scheduleSave();
   updateAccordionHints();
+  updateStickyBar();
 }
 
 // ===================== EXCEL EXPORT =====================
@@ -3240,7 +3565,7 @@ function downloadPDF() {
   const provP     = +document.getElementById('provisionalPercent').value||0;
   const provAmt   = worksSubtotal*provP/100;
   const discP     = +document.getElementById('discountPercent').value||0;
-  const preTax    = worksSubtotal+design+labour+overheadAmt+provAmt;
+  const preTax    = worksSubtotal+design+labour+transport+overheadAmt+provAmt;
   const grossBD   = preTax+taxAmt;
   const discAmt   = grossBD*discP/100;
   const grand     = grossBD-discAmt;
@@ -3257,9 +3582,9 @@ function downloadPDF() {
     overheadP>0 ? [`Contractor O&P @ ${overheadP}%`,   `${S}${fmtPdf(overheadAmt)}`]   : null,
     provP>0  ? [`Provisional Sum @ ${provP}%`,          `${S}${fmtPdf(provAmt)}`]       : null,
     taxAmt>0 ? [`${tlPdf} @ ${taxP}%`, `${S}${fmtPdf(taxAmt)}`] : null,
-    discP>0  ? [`Discount @ ${discP}%`,                `-${S}${fmt(discAmt)}`]       : null,
+    discP>0  ? [`Discount @ ${discP}%`,                `-${S}${fmtPdf(discAmt)}`]       : null,
     ['CONTRACT SUM (excl. Retention)',                  `${S}${fmtPdf(grand)}`],
-    retentionP>0 ? [`Retention @ ${retentionP}% (held by client)`, `-${S}${fmt(retentionAmt)}`] : null,
+    retentionP>0 ? [`Retention @ ${retentionP}% (held by client)`, `-${S}${fmtPdf(retentionAmt)}`] : null,
     retentionP>0 ? ['Net Payable (after retention)',    `${S}${fmtPdf(grand-retentionAmt)}`] : null,
     maintTot>0 ? ['AMC — ' + maintFreqSel + ' · ' + maintMths + ' months', S+fmtPdf(maintTot)] : null,
   ].filter(Boolean);
@@ -3388,7 +3713,7 @@ async function downloadExcel() {
   if (!isUnlocked()) {  return; }
   try {
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'Zenyard BOQ Tool';
+  wb.creator = 'TerraCost';
   wb.created = new Date();
   const ws = wb.addWorksheet('BOQ', { views: [{ state: 'frozen', ySplit: 1 }] });
 
@@ -3508,8 +3833,19 @@ async function downloadExcel() {
 
   ws.addRow([]);
 
+  // ---- Formula helpers (live totals) ----
+  // SUM of explicit cell refs, chunked to stay under Excel's 255-argument limit
+  const sumRefs = (refs) => {
+    if (!refs.length) return '0';
+    const parts = [];
+    for (let i = 0; i < refs.length; i += 200) parts.push('SUM(' + refs.slice(i, i+200).join(',') + ')');
+    return parts.join('+');
+  };
+  const itemsFirstRow = ws.rowCount + 1;
+
   // ---- Zones (Project-wide at index 0) ----
   zones.forEach((zone, zi) => {
+    const zoneScopeRows = [];
     mergedRow(zi===0 ? 'PROJECT-WIDE' : `ZONE ${zi}: ${zone.name.toUpperCase()}`, zi===0?'1A3829':'5C4626', 'FFFFFF', true, 11);
     let itemSerial = 0;
     let zoneItemStart = ws.rowCount + 1;
@@ -3529,6 +3865,7 @@ async function downloadExcel() {
       colHeaderRow();
       let scopeItemStart = ws.rowCount + 1;
       let scopeTotal = 0;
+      const scopeRows = [];
 
       sc.items.forEach(itm => {
         if (!itm.qty && !itm.desc && !itm.rate) return;
@@ -3541,7 +3878,8 @@ async function downloadExcel() {
 
         const r = ws.addRow([serial, itm.desc||'', itm.notes||'', u,
           itm.qty||0, itm.rate||0, itm.hsn||'', null, itm.taxable?'Yes':'No']);
-        r.getCell(8).value = { formula: `=E${r.number}*F${r.number}` };
+        r.getCell(8).value = { formula: `E${r.number}*F${r.number}`, result: itemTotal };
+        scopeRows.push(r.number);
         r.height = itm.notes ? 20 : 14;
         const isAlt = (r.number%2===0);
 
@@ -3583,6 +3921,8 @@ async function downloadExcel() {
         if (col===7) cell.alignment = al('right');
         if (col===8) { cell.alignment=al('right'); cell.numFmt=numFmt; }
       });
+      stR.getCell(8).value = { formula: sumRefs(scopeRows.map(n => 'H'+n)), result: scopeTotal };
+      zoneScopeRows.push(stR.number);
       ws.mergeCells(stR.number, 1, stR.number, 6);
     });
 
@@ -3595,10 +3935,12 @@ async function downloadExcel() {
       cell.border = allBorders;
       if (col===8) { cell.alignment=al('right'); cell.numFmt=numFmt; }
     });
+    ztR.getCell(8).value = { formula: sumRefs(zoneScopeRows.map(n => 'H'+n)), result: zoneTotal };
     ws.mergeCells(ztR.number, 1, ztR.number, 7);
 
     ws.addRow([]);
   });
+  const itemsLastRow = ws.rowCount;
 
   // ---- Cost Summary ----
   mergedRow('COST SUMMARY', '3D3515', 'FFFFFF', true, 11);
@@ -3617,7 +3959,7 @@ async function downloadExcel() {
   const provP      = +document.getElementById('provisionalPercent').value||0;
   const provAmt    = worksSub*provP/100;
   const discP      = +document.getElementById('discountPercent').value||0;
-  const xlPreTax   = worksSub+design+labour+xlOverheadAmt+provAmt;
+  const xlPreTax   = worksSub+design+labour+transport+xlOverheadAmt+provAmt;
   const grossBD    = xlPreTax+taxAmt;
   const discAmt    = grossBD*discP/100;
   const grand      = grossBD-discAmt;
@@ -3625,33 +3967,42 @@ async function downloadExcel() {
   const xlRetentionAmt = grand * xlRetentionP/100;
   const { grandTotal:maintTot, freqSel:maintFreqSel, months:maintMths } = getMaintTotals();
 
-  const summaryLines = [
-    { label:'Subtotal — Taxable Works',    value:taxableSubtotal,    fontHex:'333333' },
-    { label:'Subtotal — Non-Taxable Works',value:nonTaxableSubtotal, fontHex:'333333' },
-    { label:'Design Charges',             value:design,             fontHex:'333333' },
-    { label:'Labour / Install Charges',   value:labour,             fontHex:'333333' },
-    { label:'Transport / Mobilisation',   value:transport,          fontHex:'333333' },
-    xlOverheadP>0 ? { label:`Contractor O&P @ ${xlOverheadP}%`, value:xlOverheadAmt, fontHex:'28509A' } : null,
-    provP>0       ? { label:`Provisional Sum @ ${provP}%`,       value:provAmt,       fontHex:'3A6A20' } : null,
-    taxAmt>0      ? { label:`${tlEx} @ ${taxP}%`,                value:taxAmt,        fontHex:'333333' } : null,
-    discP>0       ? { label:`Discount @ ${discP}%`,              value:-discAmt,      fontHex:'AA3020' } : null,
-    xlRetentionP>0 ? { label:`Retention @ ${xlRetentionP}% (held by client)`, value:-xlRetentionAmt, fontHex:'A86010' } : null,
-    xlRetentionP>0 ? { label:'Net Payable (after retention)', value:grand-xlRetentionAmt, fontHex:'1A6A10' } : null,
-  ].filter(Boolean);
-
-  summaryLines.forEach(({ label, value, fontHex }) => {
-    const r = ws.addRow(['', label, '', '', '', '', '', value, '']);
+  // Summary rows: amounts in H are live formulas; % inputs sit in G (blue = editable)
+  const F1 = itemsFirstRow, L1 = itemsLastRow;
+  function sumRow(label, pct, formula, result, fontHex, isInput) {
+    const n = ws.rowCount + 1;
+    const r = ws.addRow(['', label, '', '', '', '', pct===null ? '' : pct, null, '']);
+    const f = typeof formula === 'function' ? formula(n) : formula;
+    r.getCell(8).value = f === null ? result : { formula: f, result: result };
     r.height = 14;
     r.getCell(2).font = ft('4A3010', 9, true);
-    r.getCell(8).font = ft(fontHex, 9);
+    r.getCell(8).font = ft(isInput ? '1F4FB4' : fontHex, 9);
     r.getCell(8).numFmt = numFmt;
     r.getCell(8).alignment = al('right');
-    r.eachCell(cell => { cell.border = btBorder; });
-    ws.mergeCells(r.number, 2, r.number, 7);
-  });
+    if (pct !== null) {
+      r.getCell(7).font = ft('1F4FB4', 9, true);
+      r.getCell(7).numFmt = '0.00"%"';
+      r.getCell(7).alignment = al('right');
+    }
+    r.eachCell({ includeEmpty:true }, cell => { cell.border = btBorder; });
+    ws.mergeCells(r.number, 2, r.number, 6);
+    return r.number;
+  }
+  const rTx = sumRow('Subtotal — Taxable Works', null, `SUMIF(I${F1}:I${L1},"Yes",H${F1}:H${L1})`, taxableSubtotal, '333333');
+  const rNt = sumRow('Subtotal — Non-Taxable Works', null, `SUMIF(I${F1}:I${L1},"No",H${F1}:H${L1})`, nonTaxableSubtotal, '333333');
+  const rDe = sumRow('Design Charges', null, null, design, '333333', true);
+  const rLa = sumRow('Labour / Install Charges', null, null, labour, '333333', true);
+  const rTr = sumRow('Transport / Mobilisation', null, null, transport, '333333', true);
+  const preTaxRows = [rTx, rNt, rDe, rLa, rTr];
+  if (xlOverheadP > 0) preTaxRows.push(sumRow('Contractor O&P (%)', xlOverheadP, n => `(H${rTx}+H${rNt})*G${n}/100`, xlOverheadAmt, '28509A'));
+  if (provP > 0)       preTaxRows.push(sumRow('Provisional Sum (%)', provP, n => `(H${rTx}+H${rNt})*G${n}/100`, provAmt, '3A6A20'));
+  const preTaxSum = sumRefs(preTaxRows.map(n => 'H'+n));
+  const rVat  = sumRow(`${tlEx} (%) on taxable works`, taxP, n => `H${rTx}*G${n}/100`, taxAmt, '333333');
+  const rDisc = sumRow('Discount (%)', discP, n => `-(${preTaxSum}+H${rVat})*G${n}/100`, -discAmt, 'AA3020');
 
   // Grand Total
-  const gtR = ws.addRow(['', 'CONTRACT SUM (excl. Retention)', '', '', '', '', '', grand, '']);
+  const gtR = ws.addRow(['', 'CONTRACT SUM (excl. Retention)', '', '', '', '', '', null, '']);
+  gtR.getCell(8).value = { formula: `${preTaxSum}+H${rVat}+H${rDisc}`, result: grand };
   gtR.height = 24;
   gtR.eachCell(cell => {
     cell.fill = bg('1A2080');
@@ -3661,6 +4012,11 @@ async function downloadExcel() {
   gtR.getCell(8).numFmt = numFmt;
   gtR.getCell(8).alignment = al('right');
   ws.mergeCells(gtR.number, 2, gtR.number, 7);
+
+  if (xlRetentionP > 0) {
+    const rRet = sumRow('Retention (%) — held by client', xlRetentionP, n => `-H${gtR.number}*G${n}/100`, -xlRetentionAmt, 'A86010');
+    sumRow('Net Payable (after retention)', null, `H${gtR.number}+H${rRet}`, grand - xlRetentionAmt, '1A6A10');
+  }
 
   if (maintTot > 0) {
     const mR = ws.addRow(['', 'AMC — ' + maintFreqSel + ' · ' + maintMths + ' months',
@@ -4131,9 +4487,9 @@ function renderMaintDetailGulf(i) {
   return `<div style="padding:10px 8px 6px;background:#F7F5F0;border-top:1px solid #E8E2D8;">
     <div style="display:flex;gap:16px;margin-bottom:8px;flex-wrap:wrap;">
       <label style="font-size:12px;color:#4A3010;font-weight:600;display:flex;align-items:center;gap:6px;">Persons:
-        <input type="number" min="0" max="20" value="${item.persons||0}" oninput="maintItems[${i}].persons=+this.value;updateMaint()" style="width:55px;padding:3px 6px;font-size:12px;border:1px solid #D4CEC5;border-radius:4px;"></label>
+        <input type="number" min="0" max="20" value="${item.persons||0}" oninput="maintItems[${i}].persons=+this.value;updateMaint(true)" style="width:55px;padding:3px 6px;font-size:12px;border:1px solid #D4CEC5;border-radius:4px;"></label>
       <label style="font-size:12px;color:#4A3010;font-weight:600;display:flex;align-items:center;gap:6px;">Hrs/Visit:
-        <input type="number" min="0" max="12" step="0.5" value="${item.hours||0}" oninput="maintItems[${i}].hours=+this.value;updateMaint()" style="width:60px;padding:3px 6px;font-size:12px;border:1px solid #D4CEC5;border-radius:4px;"></label>
+        <input type="number" min="0" max="12" step="0.5" value="${item.hours||0}" oninput="maintItems[${i}].hours=+this.value;updateMaint(true)" style="width:60px;padding:3px 6px;font-size:12px;border:1px solid #D4CEC5;border-radius:4px;"></label>
     </div>
     <div style="font-size:11px;color:#4A3010;font-weight:600;margin-bottom:5px;">Inclusions:</div>
     <div style="display:flex;flex-wrap:wrap;gap:2px;">${boxes}</div>
@@ -4211,8 +4567,8 @@ function renderMaintItems() {
         ' onchange="maintItems[' + idx2 + '].freq=this.value;updateMaint()">' +
         opts +
       '</select></td>' +
-      '<td><input type="number" min="0" value="' + (item.rate||0) + '" style="width:92px"' +
-        ' oninput="maintItems[' + idx2 + '].rate=parseFloat(this.value)||0;updateMaint()"/></td>' +
+      '<td><input type="number" min="0" value="' + (item.rate||0) + '" style="width:92px" onfocus="this.select()"' +
+        ' oninput="maintItems[' + idx2 + '].rate=parseFloat(this.value)||0;refreshMaintRowTotal(this,' + idx2 + ');updateMaint(true)"/></td>' +
       '<td style="text-align:center;font-size:12px;color:#7E786F">' + visits + '</td>' +
       '<td class="item-total">' + currency.symbol + ' ' + fmt(total) + '</td>' +
       '<td style="white-space:nowrap">' +
@@ -4225,7 +4581,17 @@ function renderMaintItems() {
   }
   tbody.innerHTML = rows.join('');
 }
-function updateMaint() {
+// Update one AMC row's total in place (keeps focus/keyboard while typing)
+function refreshMaintRowTotal(inp, i) {
+  const item = maintItems[i];
+  const row  = inp && inp.closest ? inp.closest('tr') : null;
+  if (!item || !row) return;
+  const months = +(document.getElementById('maintMonths')||{value:12}).value || 12;
+  const visits = Math.round((FREQ_VISITS[item.freq]||12) * months / 12);
+  const cell = row.querySelector('.item-total');
+  if (cell) cell.textContent = currency.symbol + ' ' + fmt((item.rate||0) * visits);
+}
+function updateMaint(skipRender) {
   const { months, freqSel, totalVisits, visitTotal, servicesTotal, grandTotal } = getMaintTotals();
   const s = currency.symbol + ' ';
   const el = id => document.getElementById(id);
@@ -4235,7 +4601,7 @@ function updateMaint() {
   if (el('amcServicesTotal'))  el('amcServicesTotal').textContent  = s + fmt(servicesTotal);
   if (el('amcVisitTotal'))     el('amcVisitTotal').textContent     = s + fmt(visitTotal);
   if (el('maintTotal'))        el('maintTotal').textContent        = s + fmt(grandTotal);
-  renderMaintItems();
+  if (!skipRender) renderMaintItems();
   scheduleSave();
   updateAccordionHints();
   updateStickyBar();
@@ -4495,7 +4861,7 @@ function updateStickyBar() {
   if (works > 0) html += `<div class="s-item"><span class="s-label">Works</span><span class="s-val">${S}${fmt(works)}</span></div>`;
   if (taxAmt > 0) html += `<div class="s-item"><span class="s-label">${currency.taxLabel||'VAT'}</span><span class="s-val">${S}${fmt(taxAmt)}</span></div>`;
   if (maintAmt > 0) html += `<div class="s-item"><span class="s-label">AMC</span><span class="s-val">${S}${fmt(maintAmt)}</span></div>`;
-  html += `<div class="s-item s-grand"><span class="s-label">Contract Sum</span><span class="s-val">${S}${fmt(grand + maintAmt)}</span></div>`;
+  html += `<div class="s-item s-grand"><span class="s-label">Contract Sum</span><span class="s-val">${S}${fmt(grand)}</span></div>`;
   el.innerHTML = html;
 }
 
@@ -4515,7 +4881,8 @@ document.addEventListener('click', function() { closeXlDropdown(); });
 async function downloadQuantitiesExcel() {
   if (needsLeadCapture()) { gateExport(downloadQuantitiesExcel, 'excel_qty'); return; }
   try {
-  const ExcelJS = await loadExcelJS();
+  const ExcelJS = window.ExcelJS;
+  if (!ExcelJS) throw new Error('Excel library not loaded. Check your internet connection and refresh.');
   const wb  = new ExcelJS.Workbook();
   const meta = getState().meta || {};
   const slug = (meta.projectName||'BOQ').replace(/[^a-zA-Z0-9]/g,'_').replace(/__+/g,'_').slice(0,30);
@@ -4707,11 +5074,8 @@ window.onload = function() {
       `BOQ-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}-${String(100+Math.floor(Math.random()*900))}`;
     document.getElementById('taxPercent').value = 5;
   } else {
-    const hasRealData = zones.some(function(z) {
-      return z.scopes.some(function(sc) {
-        return sc.items.some(function(it) { return (it.qty||0) > 0 && (it.rate||0) > 0; });
-      });
-    });
+    // Keep any BOQ that has zones or scopes set up — only clear a truly empty save
+    const hasRealData = zones.length > 1 || zones.some(function(z) { return z.scopes.length > 0; });
     if (!hasRealData) {
       try { localStorage.removeItem('boq_gulf_v1'); } catch(e) {}
       zones = [{ id:'zone_pw', name:'Project-wide', projectWide:true, scopes:[] }];
@@ -4728,11 +5092,7 @@ window.onload = function() {
   updateProjectTypeLock();
 
   // If no real saved data, auto-load the selected project type template
-  const hasRealData = zones.some(function(z) {
-    return z.scopes.some(function(sc) {
-      return sc.items.some(function(it) { return (it.qty||0) > 0 && (it.rate||0) > 0; });
-    });
-  });
+  const hasRealData = zones.length > 1 || zones.some(function(z) { return z.scopes.length > 0; });
   const ptVal = document.getElementById('projectType')?.value;
   if (!hasRealData && ptVal && PROJECT_TEMPLATES[ptVal]) {
     loadProjectTemplate(ptVal);
@@ -4741,6 +5101,288 @@ window.onload = function() {
   _prevProjectType = document.getElementById('projectType')?.value || null;
   initSplash();
 };
+
+// ===================== SUPABASE AUTH & CLOUD SAVE =====================
+// Same accounts as TerraCost India; Gulf projects are tagged region='GULF'.
+const SUPA_URL    = 'https://ivsttwvwhtmwnhhvgafp.supabase.co';
+const SUPA_KEY    = 'sb_publishable_hrhLhUw-7eiGfT23wRLtqw_EiTqlFqs';
+const SUPA_REGION = 'GULF';
+const CUR_PROJ_KEY = 'boq_gulf_current_project_id';
+
+let _supaClient = null;
+let _supaUser   = null;
+let _currentProjectId = null;
+
+function getSupabase() {
+  if (!_supaClient) {
+    if (typeof supabase === 'undefined' || !supabase.createClient) return null;
+    _supaClient = supabase.createClient(SUPA_URL, SUPA_KEY);
+  }
+  return _supaClient;
+}
+
+function clearCurrentProject() {
+  _currentProjectId = null;
+  try { localStorage.removeItem(CUR_PROJ_KEY); } catch(e) {}
+}
+
+function escHtml(str) {
+  var d = document.createElement('div');
+  d.textContent = str == null ? '' : String(str);
+  return d.innerHTML;
+}
+
+// --- Auth UI ---
+function openAuthModal(mode) {
+  document.getElementById('authModal').classList.add('open');
+  var err = document.getElementById('authError');
+  err.textContent = ''; err.style.color = 'var(--red)';
+  setAuthMode(mode || 'login');
+  setTimeout(function() { document.getElementById('authEmail').focus(); }, 100);
+}
+function closeAuthModal() { document.getElementById('authModal').classList.remove('open'); }
+
+var _authMode = 'login';
+function setAuthMode(mode) {
+  _authMode = mode;
+  var title = document.getElementById('authModalTitle');
+  var sub   = document.getElementById('authModalSub');
+  var btn   = document.getElementById('authSubmitBtn');
+  var tog   = document.getElementById('authToggle');
+  var pw    = document.getElementById('authPassword');
+  if (mode === 'signup') {
+    title.textContent = 'Create Account';
+    sub.textContent   = 'Save your BOQ projects to the cloud and open them on any device.';
+    btn.textContent   = 'Sign Up';
+    tog.innerHTML     = 'Already have an account? <a onclick="toggleAuthMode()">Log In</a>';
+    if (pw) pw.setAttribute('autocomplete', 'new-password');
+  } else {
+    title.textContent = 'Log In';
+    sub.textContent   = 'Access your saved BOQ projects from any device.';
+    btn.textContent   = 'Log In';
+    tog.innerHTML     = "Don't have an account? <a onclick=\"toggleAuthMode()\">Sign Up</a>";
+    if (pw) pw.setAttribute('autocomplete', 'current-password');
+  }
+}
+function toggleAuthMode() {
+  setAuthMode(_authMode === 'login' ? 'signup' : 'login');
+  document.getElementById('authError').textContent = '';
+}
+
+async function authSubmit() {
+  var email = (document.getElementById('authEmail').value || '').trim();
+  var pass  = (document.getElementById('authPassword').value || '');
+  var errEl = document.getElementById('authError');
+  var btn   = document.getElementById('authSubmitBtn');
+  errEl.textContent = ''; errEl.style.color = 'var(--red)';
+  if (!email || !email.includes('@')) { errEl.textContent = 'Enter a valid email.'; return; }
+  if (pass.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; return; }
+  var sb = getSupabase();
+  if (!sb) { errEl.textContent = 'Cloud login is unavailable right now. Check your connection and refresh.'; return; }
+  btn.disabled = true;
+  try {
+    var result = _authMode === 'signup'
+      ? await sb.auth.signUp({ email: email, password: pass, options: { emailRedirectTo: location.origin + location.pathname } })
+      : await sb.auth.signInWithPassword({ email: email, password: pass });
+    if (result.error) { errEl.textContent = result.error.message; return; }
+    if (_authMode === 'signup' && result.data && result.data.user && !result.data.session) {
+      errEl.style.color = 'var(--forest)';
+      errEl.textContent = 'Check your email to confirm your account, then log in.';
+      return;
+    }
+    _supaUser = result.data.user;
+    closeAuthModal();
+    updateAuthUI();
+  } catch(e) {
+    errEl.textContent = 'Could not reach the server. Check your connection.';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function supaLogout() {
+  var sb = getSupabase();
+  try { if (sb) await sb.auth.signOut(); } catch(e) {}
+  _supaUser = null;
+  clearCurrentProject();          // project pointer belongs to the account that left
+  updateAuthUI();
+}
+
+function updateAuthUI() {
+  var out = document.getElementById('authLoggedOut');
+  var inn = document.getElementById('authLoggedIn');
+  var em  = document.getElementById('authUserEmail');
+  if (!out || !inn) return;
+  if (_supaUser) {
+    out.style.display = 'none'; inn.style.display = 'flex'; em.textContent = _supaUser.email || '';
+  } else {
+    out.style.display = 'flex'; inn.style.display = 'none'; em.textContent = '';
+  }
+}
+
+// --- Cloud save / list / load / delete ---
+async function cloudSaveProject() {
+  if (!_supaUser) { openAuthModal('login'); return; }
+  var sb = getSupabase(); if (!sb) return;
+  var nameEl = document.getElementById('projectName');
+  var name = (nameEl && nameEl.value ? nameEl.value : '').trim();
+  if (!name) {
+    var clientNm = ((document.getElementById('clientName')||{}).value || '').trim();
+    name = clientNm || ('Project ' + new Date().toLocaleDateString('en-GB'));
+    if (nameEl) nameEl.value = name;
+  }
+  var state = getState();          // built after the name is set, so meta carries it
+  saveNow();                       // keep the on-device copy in step
+  var savedId = null;
+  try {
+    if (_currentProjectId) {
+      // .select() is required: a row that no longer exists or belongs to another
+      // account returns 0 rows here instead of silently "succeeding".
+      var upd = await sb.from('projects')
+        .update({ name: name, data: state, updated_at: new Date().toISOString() })
+        .eq('id', _currentProjectId)
+        .eq('user_id', _supaUser.id)
+        .select('id');
+      if (upd.error) { alert('Save failed: ' + upd.error.message); return; }
+      if (upd.data && upd.data.length) {
+        savedId = upd.data[0].id;
+        showCloudSaveToast('Project updated in cloud');
+      } else {
+        clearCurrentProject();     // stale id: fall through to a fresh insert
+      }
+    }
+    if (!savedId) {
+      var ins = await sb.from('projects')
+        .insert({ user_id: _supaUser.id, name: name, data: state, region: SUPA_REGION })
+        .select('id')
+        .single();
+      if (ins.error) { alert('Save failed: ' + ins.error.message); return; }
+      savedId = ins.data.id;
+      showCloudSaveToast('Project saved to cloud');
+    }
+    _currentProjectId = savedId;
+    try { localStorage.setItem(CUR_PROJ_KEY, savedId); } catch(e) {}
+  } catch(e) {
+    alert('Save failed: could not reach the server. Your BOQ is still saved on this device.');
+  }
+}
+
+function showCloudSaveToast(msg) {
+  var el = document.getElementById('saveStatus');
+  if (el) { el.textContent = '\u2601 ' + msg; setTimeout(function() { el.textContent = ''; }, 4000); }
+}
+
+function openProjectsPanel() {
+  if (!_supaUser) { openAuthModal('login'); return; }
+  document.getElementById('projectsPanel').classList.add('open');
+  loadProjectsList();
+}
+function closeProjectsPanel() { document.getElementById('projectsPanel').classList.remove('open'); }
+
+async function loadProjectsList() {
+  var sb = getSupabase();
+  var listEl = document.getElementById('projectsList');
+  listEl.innerHTML = '<div class="proj-empty">Loading...</div>';
+  try {
+    var res = await sb.from('projects')
+      .select('id, name, created_at, updated_at')
+      .eq('user_id', _supaUser.id)
+      .eq('region', SUPA_REGION)
+      .order('updated_at', { ascending: false });
+    if (res.error) { listEl.innerHTML = '<div class="proj-empty">Error loading projects.</div>'; return; }
+    var data = res.data;
+    if (!data || !data.length) {
+      listEl.innerHTML = '<div class="proj-empty">No saved projects yet.<br>Use "Save Project" to store your BOQ.</div>';
+      return;
+    }
+    listEl.innerHTML = data.map(function(p, i) {
+      var d = new Date(p.updated_at || p.created_at);
+      var dateStr = d.toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
+      var cur = p.id === _currentProjectId ? ' <span style="font-size:10px;color:var(--forest);font-weight:600;">(open)</span>' : '';
+      return '<div class="proj-item">' +
+        '<div class="proj-item-info">' +
+          '<div class="proj-item-name">' + escHtml(p.name) + cur + '</div>' +
+          '<div class="proj-item-date">' + dateStr + '</div>' +
+        '</div>' +
+        '<div class="proj-item-actions">' +
+          '<button class="btn-load" onclick="cloudLoadProject(' + i + ')">Open</button>' +
+          '<button class="btn-del" onclick="cloudDeleteProject(' + i + ')">Del</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+    _projectsCache = data;
+  } catch(e) {
+    listEl.innerHTML = '<div class="proj-empty">Could not reach the server.</div>';
+  }
+}
+var _projectsCache = [];
+
+async function cloudLoadProject(i) {
+  var p = _projectsCache[i]; if (!p) return;
+  if (!confirm('Open "' + p.name + '"? Unsaved changes to the current BOQ will be replaced.')) return;
+  var sb = getSupabase();
+  var res = await sb.from('projects').select('data')
+    .eq('id', p.id).eq('user_id', _supaUser.id).single();
+  if (res.error || !res.data) { alert('Could not open project.'); return; }
+  var s = res.data.data;
+  if (!s || !s.zones) { alert('Invalid project data.'); return; }
+  try {
+    localStorage.setItem('boq_gulf_v1', JSON.stringify(s));
+    localStorage.setItem(CUR_PROJ_KEY, p.id);
+  } catch(e) {}
+  closeProjectsPanel();
+  location.reload();
+}
+
+async function cloudDeleteProject(i) {
+  var p = _projectsCache[i]; if (!p) return;
+  if (!confirm('Delete "' + p.name + '" from cloud? This cannot be undone.')) return;
+  var sb = getSupabase();
+  var res = await sb.from('projects').delete().eq('id', p.id).eq('user_id', _supaUser.id);
+  if (res.error) { alert('Delete failed: ' + res.error.message); return; }
+  if (_currentProjectId === p.id) clearCurrentProject();
+  loadProjectsList();
+}
+
+// --- Init on page load ---
+async function initSupaAuth() {
+  var bar = document.getElementById('authBar');
+  var sb = getSupabase();
+  if (!sb) { if (bar) bar.style.display = 'none'; return; }   // offline / script blocked: app works as before
+  if (bar) bar.style.display = '';
+  try {
+    var storedId = null;
+    try { storedId = localStorage.getItem(CUR_PROJ_KEY); } catch(e) {}
+    if (storedId) _currentProjectId = storedId;
+    var sessionRes = await sb.auth.getSession();
+    if (sessionRes.data && sessionRes.data.session && sessionRes.data.session.user) {
+      _supaUser = sessionRes.data.session.user;
+    }
+    // Stored id may belong to another account or a deleted row: saves would be lost.
+    if (_currentProjectId && _supaUser) {
+      var chk = await sb.from('projects').select('id')
+        .eq('id', _currentProjectId).eq('user_id', _supaUser.id).eq('region', SUPA_REGION)
+        .maybeSingle();
+      if (!chk.data) clearCurrentProject();
+    }
+    updateAuthUI();
+    sb.auth.onAuthStateChange(function(event, session) {
+      var newUser = (session && session.user) ? session.user : null;
+      if (newUser && _supaUser && newUser.id !== _supaUser.id) clearCurrentProject();
+      _supaUser = newUser;
+      updateAuthUI();
+    });
+  } catch(e) {
+    console.warn('Supabase auth init error:', e);
+    updateAuthUI();
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initSupaAuth);
+} else {
+  initSupaAuth();
+}
 </script>
 </body>
 </html>
