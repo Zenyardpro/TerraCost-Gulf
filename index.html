@@ -5390,6 +5390,7 @@ async function downloadQuantitiesExcel() {
 
 
 window.onload = function() {
+  try {
   buildCurrencyOptions();
   // Gulf edition defaults to AED
   currency = { ...CURRENCIES.find(c=>c.code==='AED') };
@@ -5437,7 +5438,7 @@ window.onload = function() {
   }
 
   _prevProjectType = document.getElementById('projectType')?.value || null;
-  initSplash();
+  } catch(e) { console.error('onload error', e); } finally { initSplash(); }
 };
 
 // ===================== SUPABASE AUTH & CLOUD SAVE =====================
